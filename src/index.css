@@ -1,0 +1,72 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+  body {
+    @apply bg-void-950 text-slate-200 font-body antialiased;
+    background-image: radial-gradient(circle at 15% 0%, rgba(124,92,255,0.16), transparent 45%),
+      radial-gradient(circle at 85% 10%, rgba(0,229,255,0.10), transparent 40%);
+    background-attachment: fixed;
+  }
+  ::selection {
+    @apply bg-volt-500/40 text-white;
+  }
+  :focus-visible {
+    outline: 2px solid #00E5FF;
+    outline-offset: 2px;
+  }
+}
+
+@layer components {
+  .hud-label {
+    @apply font-hud uppercase tracking-[0.2em] text-xs text-slate-400;
+  }
+  .panel {
+    @apply relative bg-void-800/60 border border-white/10 backdrop-blur-xl;
+    clip-path: polygon(0 0, 100% 0, 100% calc(100% - 16px), calc(100% - 16px) 100%, 0 100%);
+  }
+  .panel::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    padding: 1px;
+    clip-path: polygon(0 0, 100% 0, 100% calc(100% - 16px), calc(100% - 16px) 100%, 0 100%);
+    background: linear-gradient(135deg, rgba(124,92,255,0.35), transparent 40%, rgba(0,229,255,0.25));
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+  }
+  .btn-primary {
+    @apply font-hud font-semibold uppercase tracking-wider text-sm px-6 py-3 bg-gradient-to-r from-volt-500 to-cyan-500 text-white shadow-glow-volt transition-all duration-200 hover:shadow-glow-cyan hover:-translate-y-0.5 active:translate-y-0;
+    clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
+  }
+  .btn-outline {
+    @apply font-hud font-semibold uppercase tracking-wider text-sm px-6 py-3 border border-white/20 text-slate-200 bg-white/5 backdrop-blur transition-all duration-200 hover:border-cyan-400/60 hover:text-cyan-300 hover:bg-white/10;
+    clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
+  }
+  .btn-ghost {
+    @apply font-hud font-semibold uppercase tracking-wider text-xs px-4 py-2 text-slate-400 hover:text-white transition-colors duration-150;
+  }
+  .badge {
+    @apply font-hud text-xs font-semibold uppercase tracking-wide px-2.5 py-1 rounded-sm;
+  }
+  .input-field {
+    @apply w-full bg-void-900/80 border border-white/10 px-4 py-2.5 text-sm text-slate-200 placeholder:text-slate-500 focus:border-volt-500/60 focus:outline-none transition-colors rounded-sm;
+  }
+  .label-field {
+    @apply hud-label mb-1.5 block;
+  }
+}
+
+@layer utilities {
+  .text-gradient {
+    @apply bg-gradient-to-r from-volt-400 via-cyan-400 to-cyan-500 bg-clip-text text-transparent;
+  }
+  .no-scrollbar::-webkit-scrollbar { display: none; }
+  .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+}
