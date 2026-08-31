@@ -8,15 +8,15 @@
   }
   body {
     @apply bg-void-950 text-slate-200 font-body antialiased;
-    background-image: radial-gradient(circle at 15% 0%, rgba(124,92,255,0.16), transparent 45%),
-      radial-gradient(circle at 85% 10%, rgba(0,229,255,0.10), transparent 40%);
+    background-image: radial-gradient(circle at 15% 0%, rgba(168,85,247,0.20), transparent 45%),
+      radial-gradient(circle at 85% 10%, rgba(236,72,153,0.10), transparent 40%);
     background-attachment: fixed;
   }
   ::selection {
     @apply bg-volt-500/40 text-white;
   }
   :focus-visible {
-    outline: 2px solid #00E5FF;
+    outline: 2px solid #d946ef;
     outline-offset: 2px;
   }
 }
@@ -42,11 +42,11 @@
     pointer-events: none;
   }
   .btn-primary {
-    @apply font-hud font-semibold uppercase tracking-wider text-sm px-6 py-3 bg-gradient-to-r from-volt-500 to-cyan-500 text-white shadow-glow-volt transition-all duration-200 hover:shadow-glow-cyan hover:-translate-y-0.5 active:translate-y-0;
+    @apply font-hud font-semibold uppercase tracking-wider text-sm px-6 py-3 bg-gradient-to-r from-fuchsia-500 via-violet-500 to-indigo-500 text-white shadow-[0_0_28px_rgba(168,85,247,0.30)] transition-all duration-200 hover:shadow-[0_0_34px_rgba(236,72,153,0.30)] hover:-translate-y-0.5 active:translate-y-0;
     border-radius: 12px;
   }
   .btn-outline {
-    @apply font-hud font-semibold uppercase tracking-wider text-sm px-6 py-3 border border-white/20 text-slate-200 bg-white/5 backdrop-blur transition-all duration-200 hover:border-cyan-400/60 hover:text-cyan-300 hover:bg-white/10;
+    @apply font-hud font-semibold uppercase tracking-wider text-sm px-6 py-3 border border-white/20 text-slate-200 bg-white/5 backdrop-blur transition-all duration-200 hover:border-fuchsia-400/60 hover:text-fuchsia-200 hover:bg-white/10;
     border-radius: 12px;
   }
   .btn-ghost {
@@ -66,7 +66,7 @@
 
 @layer utilities {
   .text-gradient {
-    @apply bg-gradient-to-r from-volt-400 via-cyan-400 to-cyan-500 bg-clip-text text-transparent;
+    @apply bg-gradient-to-r from-fuchsia-300 via-violet-300 to-indigo-300 bg-clip-text text-transparent;
   }
   .no-scrollbar::-webkit-scrollbar { display: none; }
   .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
