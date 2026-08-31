@@ -42,19 +42,9 @@ export default function Home() {
             )}
           </div>
 
-          <div className="mt-16 grid grid-cols-3 max-w-xl gap-6 animate-fade-up" style={{ animationDelay: "0.3s" }}>
-            <div>
-              <p className="font-display text-2xl md:text-3xl font-bold text-white">₹32K+</p>
-              <p className="hud-label mt-1">Prize Pools</p>
-            </div>
-            <div>
-              <p className="font-display text-2xl md:text-3xl font-bold text-white">60+</p>
-              <p className="hud-label mt-1">Squads Registered</p>
-            </div>
-            <div>
-              <p className="font-display text-2xl md:text-3xl font-bold text-white">5</p>
-              <p className="hud-label mt-1">Active Tournaments</p>
-            </div>
+          <div className="mt-16 flex items-center gap-3 animate-fade-up" style={{ animationDelay: "0.3s" }}>
+            <span className="w-2 h-2 rounded-full bg-live-500 animate-pulse-live" />
+            <span className="hud-label text-live-400">Live tournament hub · Official campus events</span>
           </div>
         </div>
       </section>
