@@ -15,6 +15,8 @@ export default function Home() {
       {/* HERO */}
       <section className="relative overflow-hidden border-b border-white/10">
         <div className="absolute inset-0 bg-grid-lines bg-[size:48px_48px] opacity-40 [mask-image:radial-gradient(ellipse_at_top,black_10%,transparent_70%)]" />
+        <div className="absolute -top-32 left-1/4 h-96 w-96 rounded-full bg-fuchsia-500/10 blur-3xl" />
+        <div className="absolute top-40 right-0 h-80 w-80 rounded-full bg-violet-500/10 blur-3xl" />
         <div className="absolute inset-0 bg-radial-glow" />
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 pt-16 pb-20 md:pt-24 md:pb-28">
           {liveNow && (
@@ -54,12 +56,12 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 flex items-center gap-8 overflow-x-auto no-scrollbar">
           <span className="hud-label shrink-0">PLAY. COMPETE. REPEAT.</span>
           <div className="flex items-center gap-3 shrink-0">
-            <span className="flex items-center gap-2 px-3 py-1.5 border border-cyan-500/30 bg-cyan-500/10 text-cyan-300 font-hud text-sm">
+            <span className="flex items-center gap-2 px-3 py-1.5 border border-fuchsia-400/30 bg-fuchsia-400/10 text-fuchsia-200 font-hud text-sm">
               <Gamepad2 size={14} /> Free Fire
             </span>
           </div>
           {["BGMI", "Valorant", "FIFA", "COD Mobile"].map((g) => (
-            <span key={g} className="shrink-0 px-3 py-1.5 border border-white/10 text-slate-500 font-hud text-sm">
+            <span key={g} className="shrink-0 px-3 py-1.5 border border-white/10 bg-white/[0.025] text-slate-500 font-hud text-sm">
               {g} <span className="text-[10px] text-slate-600">· soon</span>
             </span>
           ))}
