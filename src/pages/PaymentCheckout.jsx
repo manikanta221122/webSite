@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Link, Navigate, useParams, useSearchParams } from "react-router-dom";
 import { CheckCircle2, Copy, ShieldCheck, Smartphone, TriangleAlert } from "lucide-react";
 import { useData } from "../context/DataContext";
