@@ -23,7 +23,7 @@ export default function TournamentDetails() {
   const meta = gameMeta[tournament.game];
   const tournamentTeams = teams.filter((t) => t.tournamentIds?.includes(id));
   const tournamentMatches = matches.filter((m) => m.tournamentId === id);
-  const myTeam = user ? teams.find((t) => t.captainUserId === user.id && t.tournamentIds?.includes(id)) : null;
+  const myTeam = user ? teams.find((t) => (t.captainUserId === user.id || t.playerIds?.includes(user.id)) && t.tournamentIds?.includes(id)) : null;
 
   const stats = [
     { icon: Trophy, label: "Prize Pool", value: `₹${tournament.prizePool.toLocaleString("en-IN")}` },
@@ -61,7 +61,12 @@ export default function TournamentDetails() {
             ))}
           </div>
 
-          {tournament.status === "open" && (
+          {myTeam ? (
+            <div className="mt-8 flex flex-wrap items-center gap-3">
+              <span className="btn-outline inline-flex items-center gap-2 border-cyan-500/40 text-cyan-300">✓ Team Registered</span>
+              <Link to={`/team/${myTeam.id}`} className="btn-ghost">View Your Team</Link>
+            </div>
+          ) : tournament.status === "open" && (
             <Link to={`/tournaments/${id}/register`} className="btn-primary inline-flex mt-8">
               Register Your Team
             </Link>
