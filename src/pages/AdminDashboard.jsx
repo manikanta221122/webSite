@@ -151,6 +151,16 @@ export default function AdminDashboard() {
         </form>
       )}
 
+      {!showForm && (
+        <section className="panel p-6 mb-7">
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-6">
+            <div><p className="hud-label text-violet-300">Tournament control</p><h2 className="font-display text-2xl font-bold text-white mt-1">Bracket Manager</h2><p className="text-sm text-slate-500 mt-2">Visualize every round and manage each match from one place.</p></div>
+            <select id="visual-bracket" className="input-field max-w-xs" defaultValue=""><option value="">Select tournament</option>{tournaments.map(t=><option key={t.id} value={t.id}>{t.name}</option>)}</select>
+          </div>
+          {(()=>{const tid=document.getElementById("visual-bracket")?.value; const ms=matches.filter(m=>!tid||m.tournamentId===tid); const order=["Round 1","Round 2","Quarter Final","Semi Final","Grand Final"]; const label=(m,id)=>m?.teamAName||m?.teamALabel||m?.teamAId||(id?"TBD":"BYE"); return <div className="overflow-x-auto pb-3"><div className="flex gap-5 min-w-max">{order.map(round=>{const list=ms.filter(m=>m.round===round).sort((a,b)=>a.matchNumber-b.matchNumber); if(!list.length)return null; return <div key={round} className="w-64"><div className="hud-label text-fuchsia-300 mb-3">{round}</div><div className="space-y-3">{list.map(m=><div key={m.id} className="rounded-2xl border border-white/10 bg-white/[0.035] backdrop-blur-xl p-4"><div className="flex items-center justify-between mb-3"><span className="text-[10px] text-slate-600">MATCH {String(m.matchNumber).padStart(2,"0")}</span><span className={`badge ${m.status==="completed"?"text-emerald-300":""}`}>{m.status}</span></div><div className="space-y-1 text-sm"><div className={`flex justify-between rounded-lg px-3 py-2 ${m.winnerTeamId===m.teamAId?"bg-fuchsia-500/10 text-fuchsia-200":"bg-white/[0.025] text-slate-300"}`}><span>{label(m,false)}</span><b>{m.scoreA??"-"}</b></div><div className={`flex justify-between rounded-lg px-3 py-2 ${m.winnerTeamId===m.teamBId?"bg-fuchsia-500/10 text-fuchsia-200":"bg-white/[0.025] text-slate-300"}`}><span>{label(m,true)}</span><b>{m.scoreB??"-"}</b></div></div><div className="mt-3 pt-3 border-t border-white/5 flex items-center justify-between"><span className="text-[10px] text-slate-600">{m.scheduledAt?new Date(m.scheduledAt).toLocaleString("en-IN"):"Not scheduled"}</span><button className="text-xs text-fuchsia-300 hover:text-white" onClick={()=>setActiveTab("matches")}>Manage →</button></div></div>)}</div></div>})}</div></div>})()}
+        </section>
+      )}
+
       {activeTab === "overview" && !showForm && (
         <section className="grid lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 panel p-6">
