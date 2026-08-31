@@ -4,7 +4,7 @@ import { CheckCircle2, UserPlus, ShieldAlert } from "lucide-react";
 import { useData } from "../context/DataContext";
 import { modeLabel } from "../data/gameMeta";
 
-const emptyPlayer = () => ({ name: "", collegeId: "", gameUid: "", ign: "" });
+const emptyPlayer = () => ({ name: "", gameUid: "", ign: "" });
 
 export default function TeamRegistration() {
   const { id } = useParams();
@@ -14,7 +14,6 @@ export default function TeamRegistration() {
 
   const [teamName, setTeamName] = useState("");
   const [captainName, setCaptainName] = useState("");
-  const [captainId, setCaptainId] = useState("");
   const [players, setPlayers] = useState(() => Array.from({ length: tournament?.teamSize || 4 }, emptyPlayer));
   const [subEnabled, setSubEnabled] = useState(false);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
@@ -32,16 +31,15 @@ export default function TeamRegistration() {
     const errs = {};
     if (!teamName.trim()) errs.teamName = "Team name is required";
     if (!captainName.trim()) errs.captainName = "Captain name is required";
-    if (!captainId.trim()) errs.captainId = "Captain college ID is required";
     if (!acceptedTerms) errs.terms = "You must accept the event rules and payment policy to register.";
     players.forEach((p, i) => {
-      if (!p.name.trim() || !p.collegeId.trim() || !p.gameUid.trim() || !p.ign.trim()) {
+      if (!p.name.trim() || !p.gameUid.trim() || !p.ign.trim()) {
         errs[`player${i}`] = "All fields are required for every player";
       }
     });
     if (subEnabled) {
-      const anyFilled = sub.name || sub.collegeId || sub.gameUid || sub.ign;
-      const allFilled = sub.name && sub.collegeId && sub.gameUid && sub.ign;
+      const anyFilled = sub.name || sub.gameUid || sub.ign;
+      const allFilled = sub.name && sub.gameUid && sub.ign;
       if (anyFilled && !allFilled) errs.sub = "Fill in all substitute fields, or leave them blank";
     }
     setErrors(errs);
@@ -55,7 +53,6 @@ export default function TeamRegistration() {
     try { team = await registerTeam(id, {
       teamName,
       captainName,
-      captainId,
       players: [...players, ...(subEnabled && sub.name ? [{ ...sub, substitute: true }] : [])],
     }); } catch (registrationError) { setErrors((current) => ({ ...current, form: registrationError.message })); return; }
     if (Number(tournament.entryFee) > 0) {
@@ -111,11 +108,6 @@ export default function TeamRegistration() {
               <input value={captainName} onChange={(e) => setCaptainName(e.target.value)} className="input-field" placeholder="Full name" />
               {errors.captainName && <p className="text-live-400 text-xs mt-1">{errors.captainName}</p>}
             </div>
-            <div className="sm:col-span-2">
-              <label className="label-field">Captain College ID</label>
-              <input value={captainId} onChange={(e) => setCaptainId(e.target.value)} className="input-field" placeholder="e.g. 2300031045" />
-              {errors.captainId && <p className="text-live-400 text-xs mt-1">{errors.captainId}</p>}
-            </div>
           </div>
         </div>
 
@@ -126,10 +118,6 @@ export default function TeamRegistration() {
               <div>
                 <label className="label-field">Name</label>
                 <input value={p.name} onChange={(e) => updatePlayer(i, "name", e.target.value)} className="input-field" />
-              </div>
-              <div>
-                <label className="label-field">College ID</label>
-                <input value={p.collegeId} onChange={(e) => updatePlayer(i, "collegeId", e.target.value)} className="input-field" />
               </div>
               <div>
                 <label className="label-field">Game UID</label>
@@ -154,10 +142,6 @@ export default function TeamRegistration() {
               <div>
                 <label className="label-field">Name</label>
                 <input value={sub.name} onChange={(e) => setSub({ ...sub, name: e.target.value })} className="input-field" />
-              </div>
-              <div>
-                <label className="label-field">College ID</label>
-                <input value={sub.collegeId} onChange={(e) => setSub({ ...sub, collegeId: e.target.value })} className="input-field" />
               </div>
               <div>
                 <label className="label-field">Game UID</label>
