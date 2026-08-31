@@ -158,6 +158,7 @@ export function DataProvider({ children }) {
   const [payments, setPayments] = useState([]);
   const [payouts, setPayouts] = useState([]);
   const [announcements, setAnnouncements] = useState([]);
+  const [reports, setReports] = useState([]);
 
   const refreshTournaments = useCallback(async () => {
     const [{ data: rows, error }, { data: counts }] = await Promise.all([
@@ -205,6 +206,13 @@ export function DataProvider({ children }) {
     setPayouts((data || []).map(mapPayout));
   }, []);
 
+  const refreshReports = useCallback(async () => {
+    if (!user) { setReports([]); return; }
+    const { data, error } = await supabase.from("reports").select("*").order("created_at", { ascending: false });
+    if (error) { console.error(error.message); return; }
+    setReports(data || []);
+  }, [user]);
+
   const refreshAnnouncements = useCallback(async () => {
     const { data, error } = await supabase.from("announcements").select("*").order("created_at", { ascending: false });
     if (error) { console.error(error.message); return; }
@@ -213,6 +221,11 @@ export function DataProvider({ children }) {
 
   useEffect(() => { refreshTournaments(); }, [refreshTournaments]);
   useEffect(() => { refreshAnnouncements(); }, [refreshAnnouncements]);
+  useEffect(() => { refreshReports(); }, [refreshReports]);
+  useEffect(() => {
+    const channel = supabase.channel("arena-live").on("postgres_changes", { event: "*", schema: "public", table: "matches" }, () => refreshMatches()).on("postgres_changes", { event: "*", schema: "public", table: "announcements" }, () => refreshAnnouncements()).on("postgres_changes", { event: "*", schema: "public", table: "reports" }, () => refreshReports()).subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [refreshMatches, refreshAnnouncements, refreshReports]);
   useEffect(() => { refreshTeams(); }, [user, refreshTeams]);
   useEffect(() => { refreshMatches(); }, [refreshMatches]);
   useEffect(() => {
@@ -235,6 +248,22 @@ export function DataProvider({ children }) {
   );
 
   const notify = (text) => setNotifications((prev) => [{ id: `n${Date.now()}`, text, time: "Just now", read: false }, ...prev]);
+
+  const submitReport = async (matchId, category, subject, description) => {
+    if (!user) throw new Error("Please log in to submit a report.");
+    if (!subject?.trim() || !description?.trim()) throw new Error("Add a subject and description.");
+    const match = matches.find((m) => m.id === matchId);
+    const { error } = await supabase.from("reports").insert({ match_id: matchId || null, tournament_id: match?.tournamentId || null, reporter_id: user.id, category: category || "other", subject: subject.trim(), description: description.trim() });
+    if (error) throw new Error(error.message);
+    await refreshReports(); notify("Your report was submitted to tournament administration.");
+  };
+
+  const updateReport = async (reportId, status, adminNote = "") => {
+    if (user?.role !== "admin") throw new Error("Only administrators can manage reports.");
+    const { error } = await supabase.from("reports").update({ status, admin_note: adminNote, resolved_by: status === "resolved" ? user.id : null, updated_at: new Date().toISOString() }).eq("id", reportId);
+    if (error) throw new Error(error.message);
+    await refreshReports();
+  };
 
   const registerTeam = async (tournamentId, teamData) => {
     if (!user) throw new Error("Please log in before registering a team.");
@@ -550,6 +579,9 @@ export function DataProvider({ children }) {
         matches,
         notifications,
         announcements,
+        reports,
+        submitReport,
+        updateReport,
         payments,
         payouts,
         registerTeam,
