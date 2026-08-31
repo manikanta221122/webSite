@@ -24,7 +24,3 @@ alter table public.matches
 
 -- Tournament-level room credentials are managed by administrators and
 -- announced to players from the tournament page.
-alter table public.tournaments
-  add column if not exists room_id text check (room_id is null or char_length(trim(room_id)) between 1 and 40),
-  add column if not exists room_password text check (room_password is null or char_length(trim(room_password)) between 1 and 40);
-
