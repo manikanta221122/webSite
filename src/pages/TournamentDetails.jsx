@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useParams, Link, Navigate } from "react-router-dom";
-import { Trophy, Users, Wallet, CalendarClock, CalendarCheck, ShieldCheck, CircleDollarSign, Layers } from "lucide-react";
+import { Trophy, Users, Wallet, CalendarClock, CalendarCheck, ShieldCheck, CircleDollarSign, Layers, KeyRound } from "lucide-react";
 import { useData } from "../context/DataContext";
 import StatusBadge from "../components/StatusBadge";
 import MatchRow from "../components/MatchRow";
@@ -136,6 +136,27 @@ export default function TournamentDetails() {
                 ))}
               </div>
             )}
+          </div>
+        )}
+
+        {tournament.roomId && (
+          <div className="panel p-5 mb-8 border-cyan-500/20 bg-cyan-500/[0.03]">
+            <div className="flex items-center gap-2 mb-3">
+              <KeyRound size={16} className="text-cyan-400" />
+              <p className="hud-label text-cyan-400">Tournament Room Credentials</p>
+            </div>
+            <div className="grid sm:grid-cols-2 gap-3">
+              <div className="bg-white/[0.03] border border-white/5 p-3">
+                <p className="text-[10px] hud-label text-slate-600">Room ID</p>
+                <p className="font-mono text-white mt-1 select-all">{tournament.roomId}</p>
+              </div>
+              {tournament.roomPassword && (
+                <div className="bg-white/[0.03] border border-white/5 p-3">
+                  <p className="text-[10px] hud-label text-slate-600">Password</p>
+                  <p className="font-mono text-white mt-1 select-all">{tournament.roomPassword}</p>
+                </div>
+              )}
+            </div>
           </div>
         )}
 
