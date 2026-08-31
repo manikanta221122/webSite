@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
 import { useParams, Navigate, Link } from "react-router-dom";
-import { Circle, Timer, Swords, ShieldCheck, KeyRound } from "lucide-react";
+import { Circle, Timer, Swords, ShieldCheck, KeyRound, Flag } from "lucide-react";
 import { useData } from "../context/DataContext";
 import { useAuth } from "../context/AuthContext";
 
 export default function LiveMatch() {
   const { id } = useParams();
-  const { matches, tournaments, updateMatchResult } = useData();
+  const { matches, tournaments, updateMatchResult, submitReport } = useData();
   const { user } = useAuth();
   const match = matches.find((m) => m.id === id);
 
@@ -20,6 +20,9 @@ export default function LiveMatch() {
   const [roomPassword, setRoomPassword] = useState(match?.roomPassword ?? "");
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState("");
+  const [reportOpen, setReportOpen] = useState(false);
+  const [report, setReport] = useState({ category: "result", subject: "", description: "" });
+  const [reportMessage, setReportMessage] = useState("");
 
   useEffect(() => {
     if (!match) return;
@@ -96,6 +99,13 @@ export default function LiveMatch() {
         <div className="panel p-5"><p className="hud-label mb-3">{match.teamA} — Kills</p><p className="font-display font-bold text-3xl text-white">{match.killsA ?? 0}</p></div>
         <div className="panel p-5"><p className="hud-label mb-3">{match.teamB} — Kills</p><p className="font-display font-bold text-3xl text-white">{match.killsB ?? 0}</p></div>
       </div>
+
+      {!isAdmin && user && (
+        <div className="panel p-5 mt-8 border-white/10">
+          <div className="flex items-center justify-between gap-3"><div><p className="hud-label">Player support</p><h3 className="font-display text-lg font-bold text-white">Report a match issue</h3></div><button onClick={()=>setReportOpen(v=>!v)} className="btn-outline flex items-center gap-2"><Flag size={14}/> {reportOpen ? "Close" : "Report"}</button></div>
+          {reportOpen && <form onSubmit={async(e)=>{e.preventDefault();setReportMessage("");try{await submitReport(match.id,report.category,report.subject,report.description);setReport({category:"result",subject:"",description:""});setReportOpen(false);setReportMessage("Report submitted. Administration will review it.");}catch(err){setReportMessage(err.message)}}} className="mt-4 space-y-3"><select value={report.category} onChange={e=>setReport({...report,category:e.target.value})} className="input-field"><option value="result">Wrong result</option><option value="cheating">Cheating</option><option value="misconduct">Player misconduct</option><option value="technical">Technical issue</option><option value="other">Other</option></select><input required value={report.subject} onChange={e=>setReport({...report,subject:e.target.value})} className="input-field" placeholder="Short subject"/><textarea required value={report.description} onChange={e=>setReport({...report,description:e.target.value})} className="input-field min-h-[110px]" placeholder="Explain what happened..."/><button className="btn-primary">Submit report</button>{reportMessage&&<p className="text-xs text-slate-400">{reportMessage}</p>}</form>}
+        </div>
+      )}
 
       {isAdmin && (
         <div className="panel p-5 mt-8 border-volt-500/30">
