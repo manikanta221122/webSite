@@ -157,6 +157,7 @@ export function DataProvider({ children }) {
   const [notifications, setNotifications] = useState(seedNotifications);
   const [payments, setPayments] = useState([]);
   const [payouts, setPayouts] = useState([]);
+  const [announcements, setAnnouncements] = useState([]);
 
   const refreshTournaments = useCallback(async () => {
     const [{ data: rows, error }, { data: counts }] = await Promise.all([
@@ -204,7 +205,14 @@ export function DataProvider({ children }) {
     setPayouts((data || []).map(mapPayout));
   }, []);
 
+  const refreshAnnouncements = useCallback(async () => {
+    const { data, error } = await supabase.from("announcements").select("*").order("created_at", { ascending: false });
+    if (error) { console.error(error.message); return; }
+    setAnnouncements((data || []).map((row) => ({ id: row.id, tournamentId: row.tournament_id, title: row.title, message: row.message, createdAt: row.created_at })));
+  }, []);
+
   useEffect(() => { refreshTournaments(); }, [refreshTournaments]);
+  useEffect(() => { refreshAnnouncements(); }, [refreshAnnouncements]);
   useEffect(() => { refreshTeams(); }, [user, refreshTeams]);
   useEffect(() => { refreshMatches(); }, [refreshMatches]);
   useEffect(() => {
@@ -364,6 +372,46 @@ export function DataProvider({ children }) {
     await Promise.all([refreshTournaments(), refreshTeams(), refreshMatches(), refreshPayments(), refreshPayouts()]);
   };
 
+  const updateTournament = async (tournamentId, data) => {
+    if (user?.role !== "admin") throw new Error("Only administrators can edit tournaments.");
+    const mode = findMode(data.game, data.mode);
+    if (!mode) throw new Error("Choose a valid game mode.");
+    const prizePool = Number(data.prizePool) || 0;
+    const firstPrize = Number(data.firstPrize) || 0;
+    const secondPrize = Number(data.secondPrize) || 0;
+    const thirdPrize = Number(data.thirdPrize) || 0;
+    if (firstPrize + secondPrize + thirdPrize > prizePool) throw new Error("Prize split cannot be more than the advertised prize pool.");
+    const { error } = await supabase.from("tournaments").update({
+      name: data.name.trim(), game: data.game, mode: mode.id, team_size: mode.teamSize,
+      description: data.description?.trim() || "", entry_fee: Number(data.entryFee || 0),
+      prize_pool: prizePool, first_prize: firstPrize, second_prize: secondPrize, third_prize: thirdPrize,
+      max_teams: Number(data.maxTeams || 16), registration_deadline: data.registrationDeadline,
+      start_date: data.startDate, status: data.status || "open",
+      rules: data.rules ? (Array.isArray(data.rules) ? data.rules : data.rules.split("\n").filter(Boolean)) : [],
+      updated_at: new Date().toISOString(),
+    }).eq("id", tournamentId);
+    if (error) throw new Error(error.message);
+    await refreshTournaments();
+  };
+
+  const updateTournamentStatus = async (tournamentId, status) => {
+    if (user?.role !== "admin") throw new Error("Only administrators can change tournament status.");
+    const allowed = ["draft", "open", "starting_soon", "live", "completed", "cancelled"];
+    if (!allowed.includes(status)) throw new Error("Invalid tournament status.");
+    const { error } = await supabase.from("tournaments").update({ status, updated_at: new Date().toISOString() }).eq("id", tournamentId);
+    if (error) throw new Error(error.message);
+    await refreshTournaments();
+  };
+
+  const createAnnouncement = async (tournamentId, title, message) => {
+    if (user?.role !== "admin") throw new Error("Only administrators can publish announcements.");
+    const { error } = await supabase.from("announcements").insert({
+      tournament_id: tournamentId || null, title: title.trim(), message: message.trim(), created_by: user.id,
+    });
+    if (error) throw new Error(error.message);
+    await refreshAnnouncements();
+  };
+
   const createTournament = async (data, actingUser) => {
     if (actingUser?.role !== "admin") throw new Error("Only administrators can create tournaments.");
     const prizePool = Number(data.prizePool) || 0;
@@ -501,6 +549,7 @@ export function DataProvider({ children }) {
         teams,
         matches,
         notifications,
+        announcements,
         payments,
         payouts,
         registerTeam,
@@ -508,6 +557,11 @@ export function DataProvider({ children }) {
         reviewPayment,
         recordPayout,
         createTournament,
+        updateTournament,
+        updateTournamentStatus,
+        updateTournamentRoom,
+        deleteTournament,
+        createAnnouncement,
         createMatch,
         updateMatchResult,
         setMatchTeam,
