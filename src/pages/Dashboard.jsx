@@ -1,5 +1,5 @@
 import { Link, Navigate } from "react-router-dom";
-import { Trophy, Bell, CalendarClock, ShieldCheck, Swords, Clock3, Megaphone, ExternalLink, CheckCircle2 } from "lucide-react";
+import { Trophy, Bell, CalendarClock, ShieldCheck, Swords, Clock3, Megaphone, ExternalLink, CheckCircle2, Users, Target, Medal, Share2, Copy } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { useData } from "../context/DataContext";
 
@@ -21,6 +21,9 @@ export default function Dashboard() {
   const rank = myTeam ? sortedLeaderboard.findIndex((t) => t.id === myTeam.id) + 1 : null;
   const nextMatch = upcoming.slice().sort((a,b) => new Date(a.scheduledAt || `${a.date}T${a.time || "00:00"}`) - new Date(b.scheduledAt || `${b.date}T${b.time || "00:00"}`))[0];
   const myAnnouncements = announcements.filter((a) => !a.tournamentId || myTournaments.some((t) => t.id === a.tournamentId)).slice(0, 5);
+  const wins = history.filter((m) => (m.teamAId === myTeam?.id && Number(m.scoreA) > Number(m.scoreB)) || (m.teamBId === myTeam?.id && Number(m.scoreB) > Number(m.scoreA))).length;
+  const losses = history.filter((m) => (m.teamAId === myTeam?.id && Number(m.scoreA) < Number(m.scoreB)) || (m.teamBId === myTeam?.id && Number(m.scoreB) < Number(m.scoreA))).length;
+  const shareTournament = async (t) => { const url = `${window.location.origin}/tournaments/${t.id}`; try { await navigator.clipboard.writeText(url); } catch {} };
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 py-12">
@@ -39,6 +42,11 @@ export default function Dashboard() {
           <p className="hud-label text-[10px] mt-1">Leaderboard Position</p>
         </div>
         <div className="panel p-5">
+          <Target size={18} className="text-volt-400 mb-2" />
+          <p className="font-hud font-bold text-white text-lg">{wins}W · {losses}L</p>
+          <p className="hud-label text-[10px] mt-1">Match Record</p>
+        </div>
+        <div className="panel p-5">
           <ShieldCheck size={18} className="text-volt-400 mb-2" />
           <p className="font-hud font-bold text-white text-lg">{user.verified ? "Verified" : "Unverified"}</p>
           <p className="hud-label text-[10px] mt-1">Student Status</p>
@@ -46,6 +54,12 @@ export default function Dashboard() {
       </div>
 
       <div className="grid lg:grid-cols-3 gap-8">
+        <div className="lg:col-span-3 panel p-5 border-cyan-500/20 bg-cyan-500/[0.03]">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div><p className="hud-label text-cyan-400">Player Command Center</p><p className="text-white font-hud font-semibold mt-1">Your tournament journey at a glance</p></div>
+            <div className="flex gap-5 text-sm"><span className="flex items-center gap-2 text-slate-300"><Users size={15} className="text-cyan-400"/>{myTeam?.members?.length || 0} players</span><span className="flex items-center gap-2 text-slate-300"><Medal size={15} className="text-gold-400"/>{myTeam?.points || 0} points</span></div>
+          </div>
+        </div>
         <div className="lg:col-span-2 flex flex-col gap-8">
           <div>
             <h3 className="font-hud font-semibold text-white mb-3 flex items-center gap-2"><CalendarClock size={16} className="text-cyan-400" /> Upcoming Matches</h3>
@@ -104,6 +118,8 @@ export default function Dashboard() {
                   <Link key={t.id} to={`/tournaments/${t.id}`} className="panel p-4 hover:border-cyan-500/40 transition-colors">
                     <p className="font-hud font-semibold text-white text-sm">{t.name}</p>
                     <p className="text-xs text-slate-500 mt-1">₹{t.prizePool.toLocaleString("en-IN")} prize pool</p>
+                    <p className="text-[10px] text-slate-500 mt-1">{t.date || "Date TBA"} {t.time ? `· ${t.time}` : ""}</p>
+                    <button type="button" onClick={(e) => { e.preventDefault(); shareTournament(t); }} className="btn-ghost mt-2 text-[10px] inline-flex items-center gap-1"><Share2 size={12}/> Share</button>
                     <p className="text-[10px] text-cyan-400 mt-2 flex items-center gap-1"><CheckCircle2 size={11} /> Registration active</p>
                   </Link>
                 ))}
