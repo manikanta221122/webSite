@@ -6,12 +6,12 @@ import { users } from "../data/users";
 import { gameMeta, modesForGame } from "../data/gameMeta";
 import { useAuth } from "../context/AuthContext";
 
-const emptyForm = { name: "", game: "freefire", mode: modesForGame("freefire")[0].id, description: "", prizePool: "", firstPrize: "", secondPrize: "", thirdPrize: "", entryFee: "0", maxTeams: "16", registrationDeadline: "", startDate: "", rules: "" };
+const emptyForm = { name: "", game: "freefire", mode: modesForGame("freefire")[0].id, description: "", prizePool: "", firstPrize: "", secondPrize: "", thirdPrize: "", entryFee: "0", maxTeams: "16", registrationDeadline: "", startDate: "", rules: "", roomId: "", roomPassword: "" };
 const ROUND_OPTIONS = ["Round 1", "Round 2", "Quarter Final", "Semi Final", "Grand Final"];
 const emptyMatchForm = { tournamentId: "", round: "Round 1", matchNumber: "1", teamAId: "", teamALabel: "TBD", teamBId: "", teamBLabel: "TBD", scheduledAt: "", roomId: "", roomPassword: "" };
 
 export default function AdminDashboard() {
-  const { tournaments, teams, matches, payments, payouts, reviewPayment, recordPayout, createTournament, createMatch, updateMatchResult, setMatchTeam } = useData();
+  const { tournaments, teams, matches, payments, payouts, reviewPayment, recordPayout, createTournament, updateTournamentRoom, deleteTournament, createMatch, updateMatchResult, setMatchTeam } = useData();
   const { user } = useAuth();
   const [showForm, setShowForm] = useState(false);
   const [created, setCreated] = useState(null);
@@ -21,6 +21,8 @@ export default function AdminDashboard() {
   const [matchForm, setMatchForm] = useState(emptyMatchForm);
   const [matchFormError, setMatchFormError] = useState("");
   const [matchFilterId, setMatchFilterId] = useState("all");
+  const [roomForms, setRoomForms] = useState({});
+  const [roomSaving, setRoomSaving] = useState("");
   const [reports] = useState([
     { id: "r1", subject: "Dispute — Match #4 result", team: "Phoenix Squad vs Team Titans" },
     { id: "r2", subject: "Reported — suspected teaming", team: "Rogue Elites" },
@@ -132,6 +134,14 @@ export default function AdminDashboard() {
             <div><label className="label-field">Maximum Teams</label><input required min="2" type="number" value={form.maxTeams} onChange={(e) => update("maxTeams", e.target.value)} className="input-field" /></div>
             <div><label className="label-field">Registration Deadline</label><input required type="date" value={form.registrationDeadline} onChange={(e) => update("registrationDeadline", e.target.value)} className="input-field" /></div>
             <div><label className="label-field">Tournament Date</label><input required type="date" value={form.startDate} onChange={(e) => update("startDate", e.target.value)} className="input-field" /></div>
+            <div>
+              <label className="label-field">Room ID <span className="text-slate-600 normal-case tracking-normal">(optional)</span></label>
+              <input value={form.roomId} onChange={(e) => update("roomId", e.target.value)} className="input-field" placeholder="Can be added later" />
+            </div>
+            <div>
+              <label className="label-field">Room Password <span className="text-slate-600 normal-case tracking-normal">(optional)</span></label>
+              <input value={form.roomPassword} onChange={(e) => update("roomPassword", e.target.value)} className="input-field" placeholder="Can be added later" />
+            </div>
             <div className="sm:col-span-2"><label className="label-field">Rules <span className="text-slate-600 normal-case tracking-normal">(one rule per line)</span></label><textarea value={form.rules} onChange={(e) => update("rules", e.target.value)} className="input-field min-h-[130px]" placeholder={'Team must have 4 players\nAll players must be verified students\nNo cheating or third-party software'} /></div>
           </div>
           <div className="mt-6 flex flex-wrap justify-end gap-3"><button type="button" onClick={() => setShowForm(false)} className="btn-outline">Cancel</button><button type="submit" className="btn-primary flex items-center gap-2"><Trophy size={15} /> Publish Tournament</button></div>
@@ -164,9 +174,48 @@ export default function AdminDashboard() {
         <section>
           <div className="flex items-end justify-between mb-5"><div><p className="hud-label">Management</p><h2 className="font-display text-2xl font-bold text-white mt-1">All Tournaments</h2></div><button onClick={() => setShowForm(true)} className="btn-primary flex items-center gap-2"><PlusCircle size={15} /> New Tournament</button></div>
           <div className="grid md:grid-cols-2 gap-4">
-            {tournaments.map((t) => <div key={t.id} className="panel p-5"><div className="flex justify-between gap-3"><div className="flex items-center gap-2"><Gamepad2 size={16} className="text-cyan-400" /><span className="hud-label">{gameMeta[t.game]?.name || t.game}</span></div><span className="badge bg-cyan-500/10 text-cyan-300 border border-cyan-500/20">{t.status.replace("_", " ")}</span></div><h3 className="font-hud font-semibold text-white mt-4">{t.name}</h3><div className="grid grid-cols-2 gap-3 mt-4 text-xs"><div><span className="text-slate-600">Prize</span><p className="text-slate-200 mt-1">₹{Number(t.prizePool).toLocaleString("en-IN")}</p></div><div><span className="text-slate-600">Teams</span><p className="text-slate-200 mt-1">{t.registeredTeams}/{t.maxTeams}</p></div><div><span className="text-slate-600">Starts</span><p className="text-slate-200 mt-1">{t.startDate}</p></div><div><span className="text-slate-600">Deadline</span><p className="text-slate-200 mt-1">{t.registrationDeadline}</p></div></div><Link to={`/tournaments/${t.id}`} className="btn-outline w-full text-center text-xs mt-5 block">Manage / View</Link></div>)}
-          </div>
-        </section>
+            {tournaments.map((t) => {
+              const room = roomForms[t.id] || { roomId: t.roomId || "", roomPassword: t.roomPassword || "" };
+              return (
+                <div key={t.id} className="panel p-5">
+                  <div className="flex justify-between gap-3">
+                    <div className="flex items-center gap-2"><Gamepad2 size={16} className="text-cyan-400" /><span className="hud-label">{gameMeta[t.game]?.name || t.game}</span></div>
+                    <span className="badge bg-cyan-500/10 text-cyan-300 border border-cyan-500/20">{t.status.replace("_", " ")}</span>
+                  </div>
+                  <h3 className="font-hud font-semibold text-white mt-4">{t.name}</h3>
+                  <div className="grid grid-cols-2 gap-3 mt-4 text-xs">
+                    <div><span className="text-slate-600">Prize</span><p className="text-slate-200 mt-1">₹{Number(t.prizePool).toLocaleString("en-IN")}</p></div>
+                    <div><span className="text-slate-600">Teams</span><p className="text-slate-200 mt-1">{t.registeredTeams}/{t.maxTeams}</p></div>
+                    <div><span className="text-slate-600">Starts</span><p className="text-slate-200 mt-1">{t.startDate}</p></div>
+                    <div><span className="text-slate-600">Deadline</span><p className="text-slate-200 mt-1">{t.registrationDeadline}</p></div>
+                  </div>
+                  <div className="mt-5 pt-4 border-t border-white/10">
+                    <p className="hud-label text-cyan-400 mb-2 flex items-center gap-1"><KeyRound size={12} /> Tournament room credentials</p>
+                    <div className="grid grid-cols-2 gap-2">
+                      <input value={room.roomId} onChange={(e) => setRoomForms((v) => ({ ...v, [t.id]: { ...room, roomId: e.target.value } }))} className="input-field text-xs" placeholder="Room ID" />
+                      <input value={room.roomPassword} onChange={(e) => setRoomForms((v) => ({ ...v, [t.id]: { ...room, roomPassword: e.target.value } }))} className="input-field text-xs" placeholder="Room Password" />
+                    </div>
+                    <button type="button" disabled={roomSaving === t.id} onClick={async () => {
+                      setRoomSaving(t.id);
+                      try { await updateTournamentRoom(t.id, room.roomId, room.roomPassword); }
+                      catch (error) { alert(error.message); }
+                      finally { setRoomSaving(""); }
+                    }} className="btn-outline w-full mt-2 text-xs disabled:opacity-50">
+                      {roomSaving === t.id ? "Saving…" : "Save room credentials"}
+                    </button>
+                  </div>
+                  <div className="flex gap-2 mt-3">
+                    <Link to={`/tournaments/${t.id}`} className="btn-outline flex-1 text-center text-xs">Manage / View</Link>
+                    <button type="button" onClick={async () => {
+                      try { await deleteTournament(t.id); }
+                      catch (error) { alert(error.message); }
+                    }} className="badge bg-live-500/10 text-live-400 border border-live-500/25 hover:bg-live-500/20 px-3">
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              );
+            })}</section>
       )}
 
       {activeTab === "matches" && !showForm && (
