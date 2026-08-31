@@ -11,7 +11,7 @@ const ROUND_OPTIONS = ["Round 1", "Round 2", "Quarter Final", "Semi Final", "Gra
 const emptyMatchForm = { tournamentId: "", round: "Round 1", matchNumber: "1", teamAId: "", teamALabel: "TBD", teamBId: "", teamBLabel: "TBD", scheduledAt: "", roomId: "", roomPassword: "" };
 
 export default function AdminDashboard() {
-  const { tournaments, teams, matches, payments, payouts, reviewPayment, recordPayout, createTournament, updateTournamentRoom, deleteTournament, createMatch, updateMatchResult, setMatchTeam } = useData();
+  const { tournaments, teams, matches, payments, payouts, reports, updateReport, reviewPayment, recordPayout, createTournament, updateTournamentRoom, deleteTournament, createMatch, updateMatchResult, setMatchTeam } = useData();
   const { user } = useAuth();
   const [showForm, setShowForm] = useState(false);
   const [created, setCreated] = useState(null);
@@ -28,7 +28,7 @@ export default function AdminDashboard() {
   const [announcementForm, setAnnouncementForm] = useState({ tournamentId: "", title: "", message: "" });
   const [reportStatus, setReportStatus] = useState({});
   const [reportFilter, setReportFilter] = useState("all");
-  const reports = [];
+
 
 
   const update = (key, value) => setForm((current) => (
@@ -328,22 +328,8 @@ export default function AdminDashboard() {
 
       {activeTab === "reports" && !showForm && (
         <section className="mb-7">
-          <div className="flex flex-wrap items-end justify-between gap-4 mb-5">
-            <div><p className="hud-label">Moderation</p><h2 className="font-display text-2xl font-bold text-white mt-1">Reports & Disputes</h2><p className="text-sm text-slate-500 mt-2">Review player-submitted issues and track their resolution.</p></div>
-            <select value={reportFilter} onChange={(e)=>setReportFilter(e.target.value)} className="input-field max-w-[180px]">
-              <option value="all">All reports</option><option value="open">Open</option><option value="resolved">Resolved</option>
-            </select>
-          </div>
-          {reports.length === 0 ? (
-            <div className="panel p-10 text-center"><Shield size={30} className="text-slate-600 mx-auto mb-3"/><h3 className="font-hud font-semibold text-white">No reports yet</h3><p className="text-sm text-slate-500 mt-2">Player disputes and reports will appear here when submitted.</p></div>
-          ) : (
-            <div className="space-y-3">{reports.filter(r=>reportFilter==="all" || (reportStatus[r.id]||"open")===reportFilter).map(r=>(
-              <div key={r.id} className="panel p-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div><p className="font-hud font-semibold text-white">{r.subject}</p><p className="text-xs text-slate-500 mt-1">{r.team}</p><span className="badge mt-3 inline-block">{reportStatus[r.id]||"open"}</span></div>
-                <div className="flex gap-2"><button className="btn-outline text-xs" onClick={()=>setReportStatus(s=>({...s,[r.id]:"resolved"}))}>Mark resolved</button><button className="btn-ghost text-xs" onClick={()=>setReportStatus(s=>({...s,[r.id]:"open"}))}>Reopen</button></div>
-              </div>
-            ))}</div>
-          )}
+          <div className="flex flex-wrap items-end justify-between gap-4 mb-5"><div><p className="hud-label">Moderation</p><h2 className="font-display text-2xl font-bold text-white mt-1">Reports & Disputes</h2><p className="text-sm text-slate-500 mt-2">Real player reports from the live database.</p></div><select value={reportFilter} onChange={e=>setReportFilter(e.target.value)} className="input-field max-w-[180px]"><option value="all">All reports</option><option value="open">Open</option><option value="resolved">Resolved</option></select></div>
+          {reports.length===0 ? <div className="panel p-10 text-center"><Shield size={30} className="text-slate-600 mx-auto mb-3"/><h3 className="font-hud font-semibold text-white">No reports yet</h3><p className="text-sm text-slate-500 mt-2">Player disputes will appear here.</p></div> : <div className="space-y-3">{reports.filter(r=>reportFilter==="all"||r.status===reportFilter).map(r=><div key={r.id} className="panel p-5"><div className="flex flex-col lg:flex-row lg:items-start justify-between gap-4"><div className="min-w-0"><div className="flex items-center gap-2 flex-wrap"><span className="badge">{r.category}</span><span className="text-xs text-slate-600">{new Date(r.created_at).toLocaleString("en-IN")}</span></div><h3 className="font-hud font-semibold text-white mt-3">{r.subject}</h3><p className="text-sm text-slate-400 mt-2 whitespace-pre-wrap">{r.description}</p><p className="text-xs text-slate-600 mt-3">Status: <span className="text-slate-400">{r.status}</span></p>{r.admin_note&&<p className="text-xs text-cyan-300 mt-2">Admin note: {r.admin_note}</p>}</div><div className="flex gap-2 shrink-0">{r.status!=="resolved"&&<button className="btn-primary text-xs" onClick={async()=>{try{await updateReport(r.id,"resolved")}catch(e){alert(e.message)}}}>Resolve</button>}{r.status==="resolved"&&<button className="btn-outline text-xs" onClick={async()=>{try{await updateReport(r.id,"open")}catch(e){alert(e.message)}}}>Reopen</button>}</div></div></div>)}</div>}
         </section>
       )}
 
