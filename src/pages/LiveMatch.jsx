@@ -6,7 +6,7 @@ import { useAuth } from "../context/AuthContext";
 
 export default function LiveMatch() {
   const { id } = useParams();
-  const { matches, tournaments, updateMatchResult, submitReport } = useData();
+  const { matches, tournaments, updateMatchResult, submitReport, advanceWinner } = useData();
   const { user } = useAuth();
   const match = matches.find((m) => m.id === id);
 
@@ -105,6 +105,10 @@ export default function LiveMatch() {
           <div className="flex items-center justify-between gap-3"><div><p className="hud-label">Player support</p><h3 className="font-display text-lg font-bold text-white">Report a match issue</h3></div><button onClick={()=>setReportOpen(v=>!v)} className="btn-outline flex items-center gap-2"><Flag size={14}/> {reportOpen ? "Close" : "Report"}</button></div>
           {reportOpen && <form onSubmit={async(e)=>{e.preventDefault();setReportMessage("");try{await submitReport(match.id,report.category,report.subject,report.description);setReport({category:"result",subject:"",description:""});setReportOpen(false);setReportMessage("Report submitted. Administration will review it.");}catch(err){setReportMessage(err.message)}}} className="mt-4 space-y-3"><select value={report.category} onChange={e=>setReport({...report,category:e.target.value})} className="input-field"><option value="result">Wrong result</option><option value="cheating">Cheating</option><option value="misconduct">Player misconduct</option><option value="technical">Technical issue</option><option value="other">Other</option></select><input required value={report.subject} onChange={e=>setReport({...report,subject:e.target.value})} className="input-field" placeholder="Short subject"/><textarea required value={report.description} onChange={e=>setReport({...report,description:e.target.value})} className="input-field min-h-[110px]" placeholder="Explain what happened..."/><button className="btn-primary">Submit report</button>{reportMessage&&<p className="text-xs text-slate-400">{reportMessage}</p>}</form>}
         </div>
+      )}
+
+      {isAdmin && match.status === "completed" && match.winnerTeamId && (
+        <button className="btn-primary mt-4" onClick={async()=>{try{await advanceWinner(match.id)}catch(e){setSaveError(e.message)}}}>Advance Winner to Next Round</button>
       )}
 
       {isAdmin && (
