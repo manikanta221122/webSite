@@ -6,7 +6,6 @@ import { useAuth } from "../context/AuthContext";
 export default function Signup() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [collegeId, setCollegeId] = useState("");
   const [password, setPassword] = useState("");
   const [errors, setErrors] = useState({});
   const { signup } = useAuth();
@@ -19,12 +18,11 @@ export default function Signup() {
     const errs = {};
     if (!name.trim()) errs.name = "Full name is required";
     if (!email.trim()) errs.email = "College email is required";
-    if (!collegeId.trim()) errs.collegeId = "College ID is required";
     if (!password || password.length < 8) errs.password = "Password must be at least 8 characters";
     setErrors(errs);
     if (Object.keys(errs).length) return;
     setSubmitError(""); setSubmitting(true);
-    try { await signup({ name, email, collegeId, password }); navigate("/dashboard"); } catch (signupError) { setSubmitError(signupError.message); } finally { setSubmitting(false); }
+    try { await signup({ name, email, password }); navigate("/dashboard"); } catch (signupError) { setSubmitError(signupError.message); } finally { setSubmitting(false); }
   };
 
   return (
@@ -47,11 +45,6 @@ export default function Signup() {
           <label className="label-field">College Email</label>
           <input value={email} onChange={(e) => setEmail(e.target.value)} type="email" className="input-field" placeholder="you@kluniversity.in" />
           {errors.email && <p className="text-live-400 text-xs mt-1">{errors.email}</p>}
-        </div>
-        <div>
-          <label className="label-field">College ID</label>
-          <input value={collegeId} onChange={(e) => setCollegeId(e.target.value)} className="input-field" placeholder="e.g. 2300031045" />
-          {errors.collegeId && <p className="text-live-400 text-xs mt-1">{errors.collegeId}</p>}
         </div>
         <div>
           <label className="label-field">Password</label>
