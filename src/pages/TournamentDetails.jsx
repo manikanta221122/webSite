@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useParams, Link, Navigate } from "react-router-dom";
 import { Trophy, Users, Wallet, CalendarClock, CalendarCheck, ShieldCheck, CircleDollarSign, Layers, KeyRound } from "lucide-react";
 import { useData } from "../context/DataContext";
+import { useAuth } from "../context/AuthContext";
 import StatusBadge from "../components/StatusBadge";
 import MatchRow from "../components/MatchRow";
 import Bracket from "../components/Bracket";
@@ -13,6 +14,7 @@ const TABS = ["Overview", "Rules", "Teams", "Schedule", "Bracket", "Leaderboard"
 export default function TournamentDetails() {
   const { id } = useParams();
   const { tournaments, teams, matches } = useData();
+  const { user } = useAuth();
   const [tab, setTab] = useState("Overview");
 
   const tournament = tournaments.find((t) => t.id === id);
@@ -21,6 +23,7 @@ export default function TournamentDetails() {
   const meta = gameMeta[tournament.game];
   const tournamentTeams = teams.filter((t) => t.tournamentIds?.includes(id));
   const tournamentMatches = matches.filter((m) => m.tournamentId === id);
+  const myTeam = user ? teams.find((t) => t.captainUserId === user.id && t.tournamentIds?.includes(id)) : null;
 
   const stats = [
     { icon: Trophy, label: "Prize Pool", value: `₹${tournament.prizePool.toLocaleString("en-IN")}` },
@@ -92,7 +95,7 @@ export default function TournamentDetails() {
                 <ShieldCheck size={16} className="text-cyan-400" />
                 <p className="hud-label">Eligibility</p>
               </div>
-              <p className="text-sm text-slate-400">Open to verified students of KL University. Use your registered account and game identity when joining.</p>
+              <p className="text-sm text-slate-400">Open to eligible registered players. Use your account and game identity when joining.</p>
             </div>
             <div className="panel p-5 h-fit">
               <div className="flex items-center gap-2 mb-3"><CircleDollarSign size={16} className="text-volt-400" /><p className="hud-label">Prize & payment policy</p></div>
@@ -139,12 +142,13 @@ export default function TournamentDetails() {
           </div>
         )}
 
-        {tournament.roomId && (
+        {tournament.roomId && myTeam && (
           <div className="panel p-5 mb-8 border-cyan-500/20 bg-cyan-500/[0.03]">
             <div className="flex items-center gap-2 mb-3">
               <KeyRound size={16} className="text-cyan-400" />
-              <p className="hud-label text-cyan-400">Tournament Room Credentials</p>
+              <p className="hud-label text-cyan-400">Your Room Credentials</p>
             </div>
+            <p className="text-xs text-slate-500 mb-3">Visible only to a registered player on this tournament.</p>
             <div className="grid sm:grid-cols-2 gap-3">
               <div className="bg-white/[0.03] border border-white/5 p-3">
                 <p className="text-[10px] hud-label text-slate-600">Room ID</p>
