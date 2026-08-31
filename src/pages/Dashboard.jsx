@@ -1,11 +1,11 @@
 import { Link, Navigate } from "react-router-dom";
-import { Trophy, Bell, CalendarClock, ShieldCheck, Swords } from "lucide-react";
+import { Trophy, Bell, CalendarClock, ShieldCheck, Swords, Clock3, Megaphone, ExternalLink, CheckCircle2 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { useData } from "../context/DataContext";
 
 export default function Dashboard() {
   const { user } = useAuth();
-  const { teams, matches, tournaments, notifications } = useData();
+  const { teams, matches, tournaments, notifications, announcements } = useData();
 
   if (!user) return <Navigate to="/login" replace />;
 
@@ -19,13 +19,15 @@ export default function Dashboard() {
     : [];
   const sortedLeaderboard = [...teams].sort((a, b) => b.points - a.points);
   const rank = myTeam ? sortedLeaderboard.findIndex((t) => t.id === myTeam.id) + 1 : null;
+  const nextMatch = upcoming.slice().sort((a,b) => new Date(a.scheduledAt || `${a.date}T${a.time || "00:00"}`) - new Date(b.scheduledAt || `${b.date}T${b.time || "00:00"}`))[0];
+  const myAnnouncements = announcements.filter((a) => !a.tournamentId || myTournaments.some((t) => t.id === a.tournamentId)).slice(0, 5);
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 py-12">
       <p className="hud-label mb-2">Player Dashboard</p>
       <h1 className="font-display text-3xl md:text-4xl font-bold text-white mb-8">Welcome, {user.name.split(" ")[0]}</h1>
 
-      <div className="grid sm:grid-cols-3 gap-4 mb-10">
+      <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
         <div className="panel p-5">
           <Swords size={18} className="text-cyan-400 mb-2" />
           <p className="font-hud font-bold text-white text-lg">{myTeam ? myTeam.name : "No team yet"}</p>
@@ -66,6 +68,33 @@ export default function Dashboard() {
           </div>
 
           <div>
+            <h3 className="font-hud font-semibold text-white mb-3 flex items-center gap-2"><Clock3 size={16} className="text-cyan-400" /> Next Match</h3>
+            {nextMatch ? (
+              <div className="panel p-5 border-cyan-500/20 bg-cyan-500/[0.03]">
+                <p className="hud-label">{tournaments.find((t) => t.id === nextMatch.tournamentId)?.name}</p>
+                <p className="font-hud text-white font-semibold mt-2">{nextMatch.teamA} vs {nextMatch.teamB}</p>
+                <p className="text-sm text-cyan-300 mt-2">{nextMatch.date} · {nextMatch.time}</p>
+                <Link to={`/match/${nextMatch.id}`} className="btn-primary inline-flex items-center gap-2 mt-4 text-xs">Open match <ExternalLink size={13} /></Link>
+              </div>
+            ) : (
+              <div className="panel p-5 text-sm text-slate-500">Your next match will appear here after the admin schedules it.</div>
+            )}
+          </div>
+
+          <div>
+            <h3 className="font-hud font-semibold text-white mb-3 flex items-center gap-2"><Megaphone size={16} className="text-cyan-400" /> Event Updates</h3>
+            <div className="panel p-4 flex flex-col gap-3">
+              {myAnnouncements.length ? myAnnouncements.map((a) => (
+                <div key={a.id} className="pb-3 border-b border-white/5 last:border-0 last:pb-0">
+                  <p className="font-hud text-sm text-white">{a.title}</p>
+                  <p className="text-xs text-slate-400 mt-1">{a.message}</p>
+                  <p className="text-[10px] text-slate-600 mt-2">{new Date(a.createdAt).toLocaleString("en-IN")}</p>
+                </div>
+              )) : <p className="text-sm text-slate-500">No event updates yet.</p>}
+            </div>
+          </div>
+
+          <div>
             <h3 className="font-hud font-semibold text-white mb-3">My Tournaments</h3>
             {myTournaments.length === 0 ? (
               <div className="panel p-6 text-center text-slate-500 text-sm">You haven't joined any tournaments yet.</div>
@@ -75,6 +104,7 @@ export default function Dashboard() {
                   <Link key={t.id} to={`/tournaments/${t.id}`} className="panel p-4 hover:border-cyan-500/40 transition-colors">
                     <p className="font-hud font-semibold text-white text-sm">{t.name}</p>
                     <p className="text-xs text-slate-500 mt-1">₹{t.prizePool.toLocaleString("en-IN")} prize pool</p>
+                    <p className="text-[10px] text-cyan-400 mt-2 flex items-center gap-1"><CheckCircle2 size={11} /> Registration active</p>
                   </Link>
                 ))}
               </div>
