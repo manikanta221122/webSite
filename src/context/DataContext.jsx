@@ -367,7 +367,7 @@ export function DataProvider({ children }) {
 
   const deleteTournament = async (tournamentId) => {
     if (user?.role !== "admin") throw new Error("Only administrators can delete tournaments.");
-    const { error } = await supabase.from("tournaments").delete().eq("id", tournamentId);
+    const { error } = await supabase.rpc("admin_delete_tournament", { p_tournament_id: tournamentId });
     if (error) throw new Error(error.message);
     await Promise.all([refreshTournaments(), refreshTeams(), refreshMatches(), refreshPayments(), refreshPayouts()]);
   };
