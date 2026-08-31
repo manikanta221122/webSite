@@ -571,6 +571,51 @@ export function DataProvider({ children }) {
     await refreshMatches();
   };
 
+  const generateTournamentBracket = async (tournamentId) => {
+    if (user?.role !== "admin") throw new Error("Only administrators can generate brackets.");
+    const registered = teams.filter((t) => t.tournamentIds?.includes(tournamentId));
+    if (registered.length < 2) throw new Error("At least 2 registered teams are required.");
+    const shuffled = [...registered].sort(() => Math.random() - 0.5);
+    const nextPower = 2 ** Math.ceil(Math.log2(shuffled.length));
+    const byes = nextPower - shuffled.length;
+    const round1 = [];
+    let cursor = 0;
+    for (let i = 0; i < nextPower / 2; i++) {
+      const a = shuffled[cursor++];
+      const b = cursor < shuffled.length ? shuffled[cursor++] : null;
+      round1.push({ a, b });
+    }
+    const existing = matches.filter((m) => m.tournamentId === tournamentId);
+    if (existing.length) throw new Error("Matches already exist for this tournament. Delete/reset the existing bracket before generating a new one.");
+    const roundNames = nextPower === 2 ? ["Grand Final"] : nextPower === 4 ? ["Semi Final","Grand Final"] : nextPower === 8 ? ["Quarter Final","Semi Final","Grand Final"] : ["Round 1","Round 2","Quarter Final","Semi Final","Grand Final"];
+    const inserts = [];
+    round1.forEach((pair, i) => inserts.push({ tournament_id:tournamentId, round:roundNames[0], match_number:i+1, team_a_id:pair.a?.id||null, team_b_id:pair.b?.id||null, team_a_label:pair.a?null:"BYE", team_b_label:pair.b?null:"BYE", status:"upcoming", created_by:user.id }));
+    let slots = Math.ceil(nextPower/2);
+    for(let r=1;r<roundNames.length;r++){ const count=Math.max(1,slots/2); for(let i=0;i<count;i++) inserts.push({tournament_id:tournamentId,round:roundNames[r],match_number:i+1,team_a_label:"TBD",team_b_label:"TBD",status:"upcoming",created_by:user.id}); slots=count; }
+    const {error}=await supabase.from("matches").insert(inserts);
+    if(error) throw new Error(error.message);
+    await refreshMatches();
+  };
+
+  const advanceWinner = async (matchId) => {
+    if (user?.role !== "admin") throw new Error("Only administrators can advance winners.");
+    const current = matchesRaw.find(m=>m.id===matchId);
+    if(!current?.winner_team_id) throw new Error("Confirm a decisive winner first.");
+    const roundOrder=["Round 1","Round 2","Quarter Final","Semi Final","Grand Final"];
+    const idx=roundOrder.indexOf(current.round);
+    if(idx<0 || idx===roundOrder.length-1) return;
+    const nextRound=roundOrder[idx+1];
+    const nextMatches=matchesRaw.filter(m=>m.tournament_id===current.tournament_id && m.round===nextRound).sort((a,b)=>a.match_number-b.match_number);
+    const nextIndex=Math.floor((Number(current.match_number)-1)/2);
+    const target=nextMatches[nextIndex];
+    if(!target) throw new Error("Next-round slot was not found.");
+    const slot=(Number(current.match_number)%2===1)?"A":"B";
+    const col=slot==="A"?"team_a_id":"team_b_id"; const label=slot==="A"?"team_a_label":"team_b_label";
+    const {error}=await supabase.from("matches").update({[col]:current.winner_team_id,[label]:null}).eq("id",target.id);
+    if(error) throw new Error(error.message);
+    await refreshMatches();
+  };
+
   return (
     <DataContext.Provider
       value={{
@@ -597,6 +642,8 @@ export function DataProvider({ children }) {
         createMatch,
         updateMatchResult,
         setMatchTeam,
+        generateTournamentBracket,
+        advanceWinner,
       }}
     >
       {children}
