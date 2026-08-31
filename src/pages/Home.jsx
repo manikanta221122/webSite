@@ -24,12 +24,12 @@ export default function Home() {
             </Link>
           )}
           <h1 className="font-display font-black text-4xl sm:text-5xl md:text-7xl leading-[1.05] tracking-tight text-white animate-fade-up">
-            YOUR CAMPUS.<br />
-            <span className="text-gradient">YOUR TEAM.</span><br />
-            YOUR BATTLE.
+            FIND YOUR SQUAD.<br />
+            <span className="text-gradient">OWN THE ARENA.</span><br />
+            MAKE YOUR MARK.
           </h1>
           <p className="mt-6 max-w-xl text-slate-400 text-base md:text-lg font-body animate-fade-up" style={{ animationDelay: "0.1s" }}>
-            Compete with your college. Build your squad. Climb the leaderboard.
+            Build your squad. Enter the bracket. Rise through the ranks.
           </p>
           <div className="mt-9 flex flex-wrap gap-4 animate-fade-up" style={{ animationDelay: "0.2s" }}>
             <Link to="/tournaments" className="btn-primary flex items-center gap-2">
@@ -44,7 +44,7 @@ export default function Home() {
 
           <div className="mt-16 flex items-center gap-3 animate-fade-up" style={{ animationDelay: "0.3s" }}>
             <span className="w-2 h-2 rounded-full bg-live-500 animate-pulse-live" />
-            <span className="hud-label text-live-400">Live tournament hub · Official campus events</span>
+            <span className="hud-label text-live-400">Competitive tournament hub · Built for players</span>
           </div>
         </div>
       </section>
@@ -52,7 +52,7 @@ export default function Home() {
       {/* GAME STRIP */}
       <section className="border-b border-white/10 bg-void-900/40">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 flex items-center gap-8 overflow-x-auto no-scrollbar">
-          <span className="hud-label shrink-0">Supported Games</span>
+          <span className="hud-label shrink-0">PLAY. COMPETE. REPEAT.</span>
           <div className="flex items-center gap-3 shrink-0">
             <span className="flex items-center gap-2 px-3 py-1.5 border border-cyan-500/30 bg-cyan-500/10 text-cyan-300 font-hud text-sm">
               <Gamepad2 size={14} /> Free Fire
@@ -71,7 +71,7 @@ export default function Home() {
         <div className="flex items-end justify-between mb-8 flex-wrap gap-4">
           <div>
             <p className="hud-label mb-2">Right now</p>
-            <h2 className="font-display text-2xl md:text-3xl font-bold text-white">Active Tournaments</h2>
+            <h2 className="font-display text-2xl md:text-3xl font-bold text-white">Open Arenas</h2>
           </div>
           <Link to="/tournaments" className="btn-ghost flex items-center gap-1">
             View all <ArrowRight size={14} />
@@ -87,7 +87,7 @@ export default function Home() {
       {/* HOW IT WORKS */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 py-16 md:py-20 border-t border-white/10">
         <p className="hud-label mb-2">The path</p>
-        <h2 className="font-display text-2xl md:text-3xl font-bold text-white mb-10">From sign-up to the Grand Final</h2>
+        <h2 className="font-display text-2xl md:text-3xl font-bold text-white mb-10">From registration to the final showdown</h2>
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
           {[
             { icon: Gamepad2, title: "Discover", desc: "Browse open tournaments across every supported game." },
