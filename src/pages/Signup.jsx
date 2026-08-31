@@ -32,7 +32,7 @@ export default function Signup() {
           <Swords size={22} className="text-white" />
         </div>
         <h1 className="font-display text-2xl font-bold text-white">Create Your Account</h1>
-        <p className="text-slate-500 text-sm mt-1">Join Campus Clash and start competing.</p>
+        <p className="text-slate-500 text-sm mt-1">Join Arena Clash and start competing.</p>
       </div>
 
       <form onSubmit={handleSubmit} className="panel p-6 flex flex-col gap-4">
@@ -42,8 +42,8 @@ export default function Signup() {
           {errors.name && <p className="text-live-400 text-xs mt-1">{errors.name}</p>}
         </div>
         <div>
-          <label className="label-field">College Email</label>
-          <input value={email} onChange={(e) => setEmail(e.target.value)} type="email" className="input-field" placeholder="you@kluniversity.in" />
+          <label className="label-field">Email</label>
+          <input value={email} onChange={(e) => setEmail(e.target.value)} type="email" className="input-field" placeholder="you@example.com" />
           {errors.email && <p className="text-live-400 text-xs mt-1">{errors.email}</p>}
         </div>
         <div>
