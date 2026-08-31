@@ -26,10 +26,10 @@ export default function AdminDashboard() {
   const [editingTournament, setEditingTournament] = useState(null);
   const [editForm, setEditForm] = useState(null);
   const [announcementForm, setAnnouncementForm] = useState({ tournamentId: "", title: "", message: "" });
-  const [reports] = useState([
-    { id: "r1", subject: "Dispute — Match #4 result", team: "Phoenix Squad vs Team Titans" },
-    { id: "r2", subject: "Reported — suspected teaming", team: "Rogue Elites" },
-  ]);
+  const [reportStatus, setReportStatus] = useState({});
+  const [reportFilter, setReportFilter] = useState("all");
+  const reports = [];
+
 
   const update = (key, value) => setForm((current) => (
     key === "game" ? { ...current, game: value, mode: modesForGame(value)[0].id } : { ...current, [key]: value }
@@ -327,20 +327,24 @@ export default function AdminDashboard() {
       )}
 
       {activeTab === "reports" && !showForm && (
-        <section className="grid lg:grid-cols-2 gap-6 mb-7">
-          <div className="panel p-5"><p className="hud-label text-cyan-400">Announcements</p><h2 className="font-display text-2xl font-bold text-white mt-1">Broadcast to players</h2>
-            <form className="mt-5 space-y-3" onSubmit={async e=>{e.preventDefault();try{await createAnnouncement(announcementForm.tournamentId,announcementForm.title,announcementForm.message);setAnnouncementForm({tournamentId:"",title:"",message:""})}catch(err){alert(err.message)}}}>
-              <select value={announcementForm.tournamentId} onChange={e=>setAnnouncementForm({...announcementForm,tournamentId:e.target.value})} className="input-field"><option value="">All tournaments</option>{tournaments.map(t=><option key={t.id} value={t.id}>{t.name}</option>)}</select>
-              <input required value={announcementForm.title} onChange={e=>setAnnouncementForm({...announcementForm,title:e.target.value})} className="input-field" placeholder="Announcement title" />
-              <textarea required value={announcementForm.message} onChange={e=>setAnnouncementForm({...announcementForm,message:e.target.value})} className="input-field min-h-[120px]" placeholder="Room release, schedule update, rule change..." />
-              <button className="btn-primary w-full">Publish announcement</button>
-            </form>
+        <section className="mb-7">
+          <div className="flex flex-wrap items-end justify-between gap-4 mb-5">
+            <div><p className="hud-label">Moderation</p><h2 className="font-display text-2xl font-bold text-white mt-1">Reports & Disputes</h2><p className="text-sm text-slate-500 mt-2">Review player-submitted issues and track their resolution.</p></div>
+            <select value={reportFilter} onChange={(e)=>setReportFilter(e.target.value)} className="input-field max-w-[180px]">
+              <option value="all">All reports</option><option value="open">Open</option><option value="resolved">Resolved</option>
+            </select>
           </div>
-          <div className="panel p-5"><p className="hud-label">Recent broadcasts</p><div className="space-y-3 mt-4">{announcements.slice(0,8).map(a=><div key={a.id} className="p-3 border border-white/5"><p className="font-hud text-white text-sm">{a.title}</p><p className="text-xs text-slate-500 mt-1">{a.message}</p></div>)}</div></div>
+          {reports.length === 0 ? (
+            <div className="panel p-10 text-center"><Shield size={30} className="text-slate-600 mx-auto mb-3"/><h3 className="font-hud font-semibold text-white">No reports yet</h3><p className="text-sm text-slate-500 mt-2">Player disputes and reports will appear here when submitted.</p></div>
+          ) : (
+            <div className="space-y-3">{reports.filter(r=>reportFilter==="all" || (reportStatus[r.id]||"open")===reportFilter).map(r=>(
+              <div key={r.id} className="panel p-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div><p className="font-hud font-semibold text-white">{r.subject}</p><p className="text-xs text-slate-500 mt-1">{r.team}</p><span className="badge mt-3 inline-block">{reportStatus[r.id]||"open"}</span></div>
+                <div className="flex gap-2"><button className="btn-outline text-xs" onClick={()=>setReportStatus(s=>({...s,[r.id]:"resolved"}))}>Mark resolved</button><button className="btn-ghost text-xs" onClick={()=>setReportStatus(s=>({...s,[r.id]:"open"}))}>Reopen</button></div>
+              </div>
+            ))}</div>
+          )}
         </section>
-      )}
-      {activeTab === "reports" && !showForm && (
-        <section className="mb-7"><div className="mb-5"><p className="hud-label">Moderation</p><h2 className="font-display text-2xl font-bold text-white mt-1">Reports & Disputes</h2></div><div className="flex flex-col gap-3">{reports.map((r) => <div key={r.id} className="panel p-5 flex items-center justify-between flex-wrap gap-4"><div><p className="font-hud font-semibold text-white text-sm">{r.subject}</p><p className="text-xs text-slate-500 mt-1">{r.team}</p></div><div className="flex gap-2"><button className="badge bg-cyan-500/10 text-cyan-300 border border-cyan-500/25 flex items-center gap-1 hover:bg-cyan-500/20"><Check size={12} /> Resolve</button><button className="badge bg-live-500/10 text-live-400 border border-live-500/25 flex items-center gap-1 hover:bg-live-500/20"><X size={12} /> Dismiss</button></div></div>)}</div></section>
       )}
 
       {activeTab === "users" && !showForm && (
