@@ -1,0 +1,9 @@
+{
+  "name": "Arena Clash",
+  "short_name": "Arena Clash",
+  "description": "Competitive esports tournaments, matches and rankings.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#090711",
+  "theme_color": "#090711"
+}
