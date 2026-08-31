@@ -34,13 +34,14 @@ function mapTournament(row, confirmedCounts) {
     startDate: row.start_date,
     status: row.status,
     rules: row.rules || [],
+    roomId: row.room_id,
+    roomPassword: row.room_password,
   };
 }
 
 function mapPlayer(row) {
   return {
     name: row.player_name,
-    collegeId: row.college_id,
     gameUid: row.game_uid,
     ign: row.ign,
     substitute: row.is_substitute,
@@ -250,7 +251,6 @@ export function DataProvider({ children }) {
     const playerRows = teamData.players.map((p) => ({
       team_id: team.id,
       player_name: p.name,
-      college_id: p.collegeId,
       game_uid: p.gameUid,
       ign: p.ign,
       is_substitute: Boolean(p.substitute),
@@ -346,6 +346,24 @@ export function DataProvider({ children }) {
     return mapPayout(data);
   };
 
+  const updateTournamentRoom = async (tournamentId, roomId, roomPassword) => {
+    if (user?.role !== "admin") throw new Error("Only administrators can update tournament credentials.");
+    const { error } = await supabase.from("tournaments").update({
+      room_id: roomId?.trim() || null,
+      room_password: roomPassword?.trim() || null,
+      updated_at: new Date().toISOString(),
+    }).eq("id", tournamentId);
+    if (error) throw new Error(error.message);
+    await refreshTournaments();
+  };
+
+  const deleteTournament = async (tournamentId) => {
+    if (user?.role !== "admin") throw new Error("Only administrators can delete tournaments.");
+    const { error } = await supabase.from("tournaments").delete().eq("id", tournamentId);
+    if (error) throw new Error(error.message);
+    await Promise.all([refreshTournaments(), refreshTeams(), refreshMatches(), refreshPayments(), refreshPayouts()]);
+  };
+
   const createTournament = async (data, actingUser) => {
     if (actingUser?.role !== "admin") throw new Error("Only administrators can create tournaments.");
     const prizePool = Number(data.prizePool) || 0;
@@ -375,6 +393,8 @@ export function DataProvider({ children }) {
         start_date: data.startDate,
         status: "open",
         rules: data.rules ? data.rules.split("\n").filter(Boolean) : [],
+        room_id: data.roomId?.trim() || null,
+        room_password: data.roomPassword?.trim() || null,
         created_by: actingUser.id,
       })
       .select()
