@@ -339,9 +339,9 @@ export default function AdminDashboard() {
           <div className="panel p-5"><p className="hud-label">Recent broadcasts</p><div className="space-y-3 mt-4">{announcements.slice(0,8).map(a=><div key={a.id} className="p-3 border border-white/5"><p className="font-hud text-white text-sm">{a.title}</p><p className="text-xs text-slate-500 mt-1">{a.message}</p></div>)}</div></div>
         </section>
       )}
-      
-      <section className="mb-7">
-        <section><div className="mb-5"><p className="hud-label">Moderation</p><h2 className="font-display text-2xl font-bold text-white mt-1">Reports & Disputes</h2></div><div className="flex flex-col gap-3">{reports.map((r) => <div key={r.id} className="panel p-5 flex items-center justify-between flex-wrap gap-4"><div><p className="font-hud font-semibold text-white text-sm">{r.subject}</p><p className="text-xs text-slate-500 mt-1">{r.team}</p></div><div className="flex gap-2"><button className="badge bg-cyan-500/10 text-cyan-300 border border-cyan-500/25 flex items-center gap-1 hover:bg-cyan-500/20"><Check size={12} /> Resolve</button><button className="badge bg-live-500/10 text-live-400 border border-live-500/25 flex items-center gap-1 hover:bg-live-500/20"><X size={12} /> Dismiss</button></div></div>)}</div></section>
+      {activeTab === "reports" && !showForm && (
+        <section className="mb-7"><div className="mb-5"><p className="hud-label">Moderation</p><h2 className="font-display text-2xl font-bold text-white mt-1">Reports & Disputes</h2></div><div className="flex flex-col gap-3">{reports.map((r) => <div key={r.id} className="panel p-5 flex items-center justify-between flex-wrap gap-4"><div><p className="font-hud font-semibold text-white text-sm">{r.subject}</p><p className="text-xs text-slate-500 mt-1">{r.team}</p></div><div className="flex gap-2"><button className="badge bg-cyan-500/10 text-cyan-300 border border-cyan-500/25 flex items-center gap-1 hover:bg-cyan-500/20"><Check size={12} /> Resolve</button><button className="badge bg-live-500/10 text-live-400 border border-live-500/25 flex items-center gap-1 hover:bg-live-500/20"><X size={12} /> Dismiss</button></div></div>)}</div></section>
+        </section>
       )}
 
       {activeTab === "users" && !showForm && (
