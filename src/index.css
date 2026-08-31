@@ -26,15 +26,15 @@
     @apply font-hud uppercase tracking-[0.2em] text-xs text-slate-400;
   }
   .panel {
-    @apply relative bg-void-800/60 border border-white/10 backdrop-blur-xl;
-    clip-path: polygon(0 0, 100% 0, 100% calc(100% - 16px), calc(100% - 16px) 100%, 0 100%);
+    @apply relative bg-white/[0.045] border border-white/10 backdrop-blur-2xl shadow-2xl;
+    border-radius: 18px;
   }
   .panel::before {
     content: "";
     position: absolute;
     inset: 0;
     padding: 1px;
-    clip-path: polygon(0 0, 100% 0, 100% calc(100% - 16px), calc(100% - 16px) 100%, 0 100%);
+    border-radius: 18px;
     background: linear-gradient(135deg, rgba(124,92,255,0.35), transparent 40%, rgba(0,229,255,0.25));
     -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
     -webkit-mask-composite: xor;
@@ -43,15 +43,16 @@
   }
   .btn-primary {
     @apply font-hud font-semibold uppercase tracking-wider text-sm px-6 py-3 bg-gradient-to-r from-volt-500 to-cyan-500 text-white shadow-glow-volt transition-all duration-200 hover:shadow-glow-cyan hover:-translate-y-0.5 active:translate-y-0;
-    clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
+    border-radius: 12px;
   }
   .btn-outline {
     @apply font-hud font-semibold uppercase tracking-wider text-sm px-6 py-3 border border-white/20 text-slate-200 bg-white/5 backdrop-blur transition-all duration-200 hover:border-cyan-400/60 hover:text-cyan-300 hover:bg-white/10;
-    clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
+    border-radius: 12px;
   }
   .btn-ghost {
     @apply font-hud font-semibold uppercase tracking-wider text-xs px-4 py-2 text-slate-400 hover:text-white transition-colors duration-150;
   }
+  .glass-card { @apply bg-white/[0.035] border border-white/10 backdrop-blur-xl shadow-xl rounded-2xl; }
   .badge {
     @apply font-hud text-xs font-semibold uppercase tracking-wide px-2.5 py-1 rounded-sm;
   }
