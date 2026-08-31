@@ -1,10 +1,11 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { Users, Trophy, Radio, Shield, Check, X, Ban, PlusCircle, CheckCircle2, Gamepad2, ArrowUpRight, Settings2, Swords, CalendarClock, KeyRound } from "lucide-react";
 import { useData } from "../context/DataContext";
 import { users } from "../data/users";
 import { gameMeta, modesForGame } from "../data/gameMeta";
 import { useAuth } from "../context/AuthContext";
+import { supabase } from "../lib/supabase";
 
 const emptyForm = { name: "", game: "freefire", mode: modesForGame("freefire")[0].id, description: "", prizePool: "", firstPrize: "", secondPrize: "", thirdPrize: "", entryFee: "0", maxTeams: "16", registrationDeadline: "", startDate: "", rules: "", roomId: "", roomPassword: "" };
 const ROUND_OPTIONS = ["Round 1", "Round 2", "Quarter Final", "Semi Final", "Grand Final"];
@@ -72,7 +73,7 @@ export default function AdminDashboard() {
   const approvedRevenue = payments.filter((payment) => payment.status === "approved").reduce((total, payment) => total + payment.amount, 0);
   const paidPrizes = payouts.reduce((total, payout) => total + payout.amount, 0);
   const stats = [
-    { icon: Users, label: "Players", value: users.filter((u) => u.role === "player").length + 40, detail: "Verified campus accounts" },
+    { icon: Users, label: "Players", value: users.filter((u) => u.role === "player").length, detail: "Verified campus accounts" },
     { icon: Trophy, label: "Tournaments", value: tournaments.length, detail: "Created by administration" },
     { icon: Radio, label: "Active", value: activeCount, detail: "Open or starting soon" },
     { icon: Shield, label: "Teams", value: teams.length, detail: "Registered squads" },
@@ -355,12 +356,23 @@ export default function AdminDashboard() {
       )}
 
       {activeTab === "users" && !showForm && (
-        <section><div className="mb-5"><p className="hud-label">Campus accounts</p><h2 className="font-display text-2xl font-bold text-white mt-1">User Management</h2></div><div className="panel overflow-x-auto"><table className="w-full text-sm min-w-[600px]"><thead><tr className="border-b border-white/10 text-left"><th className="hud-label px-5 py-4">Name</th><th className="hud-label px-5 py-4">Role</th><th className="hud-label px-5 py-4">Status</th><th className="hud-label px-5 py-4 text-right">Action</th></tr></thead><tbody>{users.map((u) => <tr key={u.id} className="border-b border-white/5 last:border-0"><td className="px-5 py-4 text-slate-200 font-hud">{u.name}</td><td className="px-5 py-4 text-slate-400 capitalize">{u.role}</td><td className="px-5 py-4 text-cyan-400 text-xs">{u.verified ? "Verified" : "Unverified"}</td><td className="px-5 py-4 text-right"><button className="badge bg-live-500/10 text-live-400 border border-live-500/25 inline-flex items-center gap-1 hover:bg-live-500/20"><Ban size={12} /> Ban</button></td></tr>)}</tbody></table></div></section>
+        <section>
+          <div className="mb-5"><p className="hud-label">Account directory</p><h2 className="font-display text-2xl font-bold text-white mt-1">User Management</h2><p className="text-sm text-slate-500 mt-2">Live accounts from Supabase. No demo users or fake actions.</p></div>
+          <LiveUsers />
+        </section>
       )}
 
       <div className="mt-10 panel p-5"><p className="hud-label text-cyan-400 mb-3">Admin Control Map</p><div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs text-slate-400"><div>🏆 Tournaments<br/><span className="text-slate-600">Create · edit · delete</span></div><div>⚔ Matches<br/><span className="text-slate-600">Schedule · rooms · results</span></div><div>💳 Payments<br/><span className="text-slate-600">Approve · payouts</span></div><div>📢 Announcements<br/><span className="text-slate-600">Publish event updates</span></div><div>🛡 Reports<br/><span className="text-slate-600">Review disputes</span></div><div>👥 Players<br/><span className="text-slate-600">Monitor accounts</span></div><div>📊 Leaderboards<br/><span className="text-slate-600">Track competition</span></div><div>🔐 Credentials<br/><span className="text-slate-600">Release room access</span></div></div></div><p className="text-center text-[11px] text-slate-700 mt-6">Campus Clash Admin Console · ADMIN CONTROL CENTER</p>
     </div>
   );
+}
+
+function LiveUsers() {
+  const [rows,setRows]=useState([]),[loading,setLoading]=useState(true),[error,setError]=useState(""),[query,setQuery]=useState("");
+  const load=async()=>{setLoading(true);const {data,error}=await supabase.from("profiles").select("id,full_name,role,verified,created_at").order("created_at",{ascending:false});if(error)setError(error.message);else{setRows(data||[]);setError("")}setLoading(false)};
+  useEffect(()=>{load();const ch=supabase.channel("admin-users").on("postgres_changes",{event:"*",schema:"public",table:"profiles"},load).subscribe();return()=>supabase.removeChannel(ch)},[]);
+  const filtered=rows.filter(u=>[u.full_name,u.role].filter(Boolean).join(" ").toLowerCase().includes(query.toLowerCase()));
+  return <div className="panel overflow-x-auto"><div className="p-4 border-b border-white/10 flex flex-col sm:flex-row gap-3 justify-between"><input className="input-field max-w-sm" value={query} onChange={e=>setQuery(e.target.value)} placeholder="Search accounts..."/><button className="btn-outline text-xs" onClick={load}>Refresh</button></div>{loading?<div className="p-10 text-center text-slate-500">Loading live accounts…</div>:error?<div className="p-8 text-center text-live-400">{error}</div>:<table className="w-full text-sm min-w-[720px]"><thead><tr className="border-b border-white/10 text-left"><th className="hud-label px-5 py-4">Player</th><th className="hud-label px-5 py-4">Role</th><th className="hud-label px-5 py-4">Verification</th><th className="hud-label px-5 py-4">Joined</th><th className="hud-label px-5 py-4 text-right">Account</th></tr></thead><tbody>{filtered.map(u=><tr key={u.id} className="border-b border-white/5 last:border-0"><td className="px-5 py-4 text-white font-hud">{u.full_name||"Unnamed player"}</td><td className="px-5 py-4 text-slate-400 capitalize">{u.role||"player"}</td><td className="px-5 py-4 text-xs">{u.verified?<span className="text-emerald-300">Verified</span>:<span className="text-amber-300">Unverified</span>}</td><td className="px-5 py-4 text-slate-500 text-xs">{u.created_at?new Date(u.created_at).toLocaleDateString("en-IN"):"—"}</td><td className="px-5 py-4 text-right text-[10px] text-slate-700 font-mono">{u.id.slice(0,8)}…</td></tr>)}</tbody></table>}</div>;
 }
 
 // Inline editor for one match row: score, kills, and status, saved together
