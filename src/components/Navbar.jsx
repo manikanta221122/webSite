@@ -30,11 +30,11 @@ export default function Navbar() {
     <header className="sticky top-0 z-50 border-b border-white/10 bg-void-950/90 backdrop-blur-xl">
       <nav className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
         <Link to="/" className="flex items-center gap-2 shrink-0" onClick={() => setOpen(false)}>
-          <div className="w-8 h-8 flex items-center justify-center bg-gradient-to-br from-volt-500 to-cyan-500 shadow-glow-volt" style={{ clipPath: "polygon(20% 0,100% 0,80% 100%,0 100%)" }}>
+          <div className="w-8 h-8 flex items-center justify-center bg-gradient-to-br from-fuchsia-500 to-violet-500 shadow-[0_0_24px_rgba(168,85,247,0.35)]" style={{ clipPath: "polygon(20% 0,100% 0,80% 100%,0 100%)" }}>
             <Swords size={16} className="text-white" />
           </div>
           <span className="font-display font-bold text-lg tracking-wide text-white">
-            CAMPUS<span className="text-gradient">CLASH</span>
+            ARENA<span className="text-gradient">CLASH</span>
           </span>
         </Link>
 
