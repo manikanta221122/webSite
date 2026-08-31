@@ -215,7 +215,9 @@ export default function AdminDashboard() {
                   </div>
                 </div>
               );
-            })}</section>
+            })}
+          </div>
+        </section>
       )}
 
       {activeTab === "matches" && !showForm && (
