@@ -43,7 +43,7 @@ export default function Tournaments() {
       <div className="mb-8">
         <p className="hud-label mb-2">Discover</p>
         <h1 className="font-display text-3xl md:text-4xl font-bold text-white">All Tournaments</h1>
-        <p className="text-slate-500 mt-2">Search, filter and register for tournaments happening across campus.</p>
+        <p className="text-slate-500 mt-2">Find your next arena. Search, filter and enter tournaments built for competition.</p>
       </div>
 
       <div className="panel p-4 md:p-5 mb-8 flex flex-col gap-4">
