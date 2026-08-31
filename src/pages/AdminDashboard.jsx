@@ -23,6 +23,9 @@ export default function AdminDashboard() {
   const [matchFilterId, setMatchFilterId] = useState("all");
   const [roomForms, setRoomForms] = useState({});
   const [roomSaving, setRoomSaving] = useState("");
+  const [editingTournament, setEditingTournament] = useState(null);
+  const [editForm, setEditForm] = useState(null);
+  const [announcementForm, setAnnouncementForm] = useState({ tournamentId: "", title: "", message: "" });
   const [reports] = useState([
     { id: "r1", subject: "Dispute — Match #4 result", team: "Phoenix Squad vs Team Titans" },
     { id: "r2", subject: "Reported — suspected teaming", team: "Rogue Elites" },
@@ -170,6 +173,26 @@ export default function AdminDashboard() {
         </section>
       )}
 
+      {editingTournament && editForm && (
+        <section className="panel p-6 mb-7 border-cyan-500/20">
+          <div className="flex items-center justify-between mb-5"><div><p className="hud-label text-cyan-400">Tournament editor</p><h2 className="font-display text-2xl font-bold text-white">{editingTournament.name}</h2></div><button type="button" onClick={()=>{setEditingTournament(null);setEditForm(null)}} className="btn-outline text-xs">Close</button></div>
+          <div className="grid sm:grid-cols-2 gap-4">
+            <input value={editForm.name} onChange={e=>setEditForm({...editForm,name:e.target.value})} className="input-field" placeholder="Tournament name" />
+            <select value={editForm.game} onChange={e=>setEditForm({...editForm,game:e.target.value,mode:modesForGame(e.target.value)[0].id})} className="input-field">{Object.entries(gameMeta).map(([id,m])=><option key={id} value={id}>{m.name}</option>)}</select>
+            <select value={editForm.mode} onChange={e=>setEditForm({...editForm,mode:e.target.value})} className="input-field">{modesForGame(editForm.game).map(m=><option key={m.id} value={m.id}>{m.name}</option>)}</select>
+            <select value={editForm.status} onChange={e=>setEditForm({...editForm,status:e.target.value})} className="input-field">{["draft","open","starting_soon","live","completed","cancelled"].map(s=><option key={s} value={s}>{s.replace("_"," ")}</option>)}</select>
+            <input type="number" min="0" value={editForm.prizePool} onChange={e=>setEditForm({...editForm,prizePool:e.target.value})} className="input-field" placeholder="Prize pool" />
+            <input type="number" min="0" value={editForm.entryFee} onChange={e=>setEditForm({...editForm,entryFee:e.target.value})} className="input-field" placeholder="Entry fee" />
+            <input type="number" min="2" value={editForm.maxTeams} onChange={e=>setEditForm({...editForm,maxTeams:e.target.value})} className="input-field" placeholder="Maximum teams" />
+            <input type="date" value={editForm.registrationDeadline} onChange={e=>setEditForm({...editForm,registrationDeadline:e.target.value})} className="input-field" />
+            <input type="date" value={editForm.startDate} onChange={e=>setEditForm({...editForm,startDate:e.target.value})} className="input-field" />
+            <textarea value={editForm.description} onChange={e=>setEditForm({...editForm,description:e.target.value})} className="input-field min-h-[90px]" placeholder="Description" />
+            <div className="sm:col-span-2"><label className="label-field">Rules</label><textarea value={editForm.rules} onChange={e=>setEditForm({...editForm,rules:e.target.value})} className="input-field min-h-[100px]" /></div>
+          </div>
+          <div className="flex justify-end mt-5"><button type="button" className="btn-primary" onClick={async()=>{try{await updateTournament(editingTournament.id,editForm);setEditingTournament(null);setEditForm(null)}catch(e){alert(e.message)}}}>Save tournament changes</button></div>
+        </section>
+      )}
+
       {activeTab === "tournaments" && !showForm && (
         <section>
           <div className="flex items-end justify-between mb-5"><div><p className="hud-label">Management</p><h2 className="font-display text-2xl font-bold text-white mt-1">All Tournaments</h2></div><button onClick={() => setShowForm(true)} className="btn-primary flex items-center gap-2"><PlusCircle size={15} /> New Tournament</button></div>
@@ -205,7 +228,8 @@ export default function AdminDashboard() {
                     </button>
                   </div>
                   <div className="flex gap-2 mt-3">
-                    <Link to={`/tournaments/${t.id}`} className="btn-outline flex-1 text-center text-xs">Manage / View</Link>
+                    <button type="button" onClick={() => { setEditingTournament(t); setEditForm({name:t.name,game:t.game,mode:t.mode,status:t.status,prizePool:t.prizePool,entryFee:t.entryFee,maxTeams:t.maxTeams,registrationDeadline:t.registrationDeadline,startDate:t.startDate,description:t.description,rules:(t.rules||[]).join("\n"),firstPrize:t.prizeSplit.first,secondPrize:t.prizeSplit.second,thirdPrize:t.prizeSplit.third}); }} className="btn-outline flex-1 text-center text-xs">Edit</button>
+                    <Link to={`/tournaments/${t.id}`} className="btn-outline flex-1 text-center text-xs">View</Link>
                     <button type="button" onClick={async () => {
                       try { await deleteTournament(t.id); }
                       catch (error) { alert(error.message); }
@@ -303,6 +327,20 @@ export default function AdminDashboard() {
       )}
 
       {activeTab === "reports" && !showForm && (
+        <section className="grid lg:grid-cols-2 gap-6 mb-7">
+          <div className="panel p-5"><p className="hud-label text-cyan-400">Announcements</p><h2 className="font-display text-2xl font-bold text-white mt-1">Broadcast to players</h2>
+            <form className="mt-5 space-y-3" onSubmit={async e=>{e.preventDefault();try{await createAnnouncement(announcementForm.tournamentId,announcementForm.title,announcementForm.message);setAnnouncementForm({tournamentId:"",title:"",message:""})}catch(err){alert(err.message)}}}>
+              <select value={announcementForm.tournamentId} onChange={e=>setAnnouncementForm({...announcementForm,tournamentId:e.target.value})} className="input-field"><option value="">All tournaments</option>{tournaments.map(t=><option key={t.id} value={t.id}>{t.name}</option>)}</select>
+              <input required value={announcementForm.title} onChange={e=>setAnnouncementForm({...announcementForm,title:e.target.value})} className="input-field" placeholder="Announcement title" />
+              <textarea required value={announcementForm.message} onChange={e=>setAnnouncementForm({...announcementForm,message:e.target.value})} className="input-field min-h-[120px]" placeholder="Room release, schedule update, rule change..." />
+              <button className="btn-primary w-full">Publish announcement</button>
+            </form>
+          </div>
+          <div className="panel p-5"><p className="hud-label">Recent broadcasts</p><div className="space-y-3 mt-4">{announcements.slice(0,8).map(a=><div key={a.id} className="p-3 border border-white/5"><p className="font-hud text-white text-sm">{a.title}</p><p className="text-xs text-slate-500 mt-1">{a.message}</p></div>)}</div></div>
+        </section>
+      )}
+      
+      <section className="mb-7">
         <section><div className="mb-5"><p className="hud-label">Moderation</p><h2 className="font-display text-2xl font-bold text-white mt-1">Reports & Disputes</h2></div><div className="flex flex-col gap-3">{reports.map((r) => <div key={r.id} className="panel p-5 flex items-center justify-between flex-wrap gap-4"><div><p className="font-hud font-semibold text-white text-sm">{r.subject}</p><p className="text-xs text-slate-500 mt-1">{r.team}</p></div><div className="flex gap-2"><button className="badge bg-cyan-500/10 text-cyan-300 border border-cyan-500/25 flex items-center gap-1 hover:bg-cyan-500/20"><Check size={12} /> Resolve</button><button className="badge bg-live-500/10 text-live-400 border border-live-500/25 flex items-center gap-1 hover:bg-live-500/20"><X size={12} /> Dismiss</button></div></div>)}</div></section>
       )}
 
