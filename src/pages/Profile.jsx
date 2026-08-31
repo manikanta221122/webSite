@@ -33,7 +33,6 @@ export default function Profile() {
             )}
           </div>
           <p className="text-slate-500 text-sm mt-1">{user.email}</p>
-          <p className="text-slate-500 text-sm">KL University • ID {user.collegeId}</p>
         </div>
       </div>
 
