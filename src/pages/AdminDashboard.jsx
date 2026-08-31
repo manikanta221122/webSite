@@ -11,7 +11,7 @@ const ROUND_OPTIONS = ["Round 1", "Round 2", "Quarter Final", "Semi Final", "Gra
 const emptyMatchForm = { tournamentId: "", round: "Round 1", matchNumber: "1", teamAId: "", teamALabel: "TBD", teamBId: "", teamBLabel: "TBD", scheduledAt: "", roomId: "", roomPassword: "" };
 
 export default function AdminDashboard() {
-  const { tournaments, teams, matches, payments, payouts, reports, updateReport, reviewPayment, recordPayout, createTournament, updateTournamentRoom, deleteTournament, createMatch, updateMatchResult, setMatchTeam } = useData();
+  const { tournaments, teams, matches, payments, payouts, reports, updateReport, reviewPayment, recordPayout, createTournament, updateTournamentRoom, deleteTournament, createMatch, updateMatchResult, setMatchTeam, generateTournamentBracket, advanceWinner } = useData();
   const { user } = useAuth();
   const [showForm, setShowForm] = useState(false);
   const [created, setCreated] = useState(null);
@@ -174,6 +174,17 @@ export default function AdminDashboard() {
       )}
 
       {editingTournament && editForm && (
+        <section className="panel p-6 mb-7 border-fuchsia-500/20 bg-fuchsia-500/[0.02]">
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-5">
+            <div><p className="hud-label text-fuchsia-300">Bracket engine</p><h2 className="font-display text-2xl font-bold text-white mt-1">Plan the tournament</h2><p className="text-sm text-slate-500 mt-2">Generate matchups from registered teams, then advance confirmed winners into the next round.</p></div>
+            <select id="bracket-tournament" className="input-field max-w-xs" defaultValue=""><option value="" disabled>Select tournament</option>{tournaments.map(t=><option key={t.id} value={t.id}>{t.name} · {teams.filter(tm=>tm.tournamentIds?.includes(t.id)).length} teams</option>)}</select>
+          </div>
+          <div className="grid sm:grid-cols-2 gap-3">
+            <button className="btn-primary" onClick={async()=>{const id=document.getElementById("bracket-tournament")?.value;if(!id)return alert("Select a tournament first.");try{await generateTournamentBracket(id);alert("Bracket generated from registered teams.")}catch(e){alert(e.message)}}}>Generate Bracket</button>
+            <p className="text-xs text-slate-500 flex items-center">Tip: add room credentials to each match shortly before it starts. Only participating teams should receive them.</p>
+          </div>
+        </section>
+
         <section className="panel p-6 mb-7 border-cyan-500/20">
           <div className="flex items-center justify-between mb-5"><div><p className="hud-label text-cyan-400">Tournament editor</p><h2 className="font-display text-2xl font-bold text-white">{editingTournament.name}</h2></div><button type="button" onClick={()=>{setEditingTournament(null);setEditForm(null)}} className="btn-outline text-xs">Close</button></div>
           <div className="grid sm:grid-cols-2 gap-4">
