@@ -15,8 +15,9 @@ function toUser(authUser, profile) {
 }
 
 async function fetchProfile(userId) {
-  const { data, error } = await supabase.from("profiles").select("*").eq("id", userId).single();
+  const { data, error } = await supabase.from("profiles").select("*").eq("id", userId).limit(1).maybeSingle();
   if (error) throw error;
+  if (!data) throw new Error("Your player profile is missing. Please contact the admin.");
   return data;
 }
 
