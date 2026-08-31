@@ -7,32 +7,32 @@ export default function Footer() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-12 grid grid-cols-2 md:grid-cols-4 gap-8">
         <div className="col-span-2 md:col-span-1">
           <div className="flex items-center gap-2 mb-3">
-            <div className="w-7 h-7 flex items-center justify-center bg-gradient-to-br from-volt-500 to-cyan-500" style={{ clipPath: "polygon(20% 0,100% 0,80% 100%,0 100%)" }}>
+            <div className="w-7 h-7 flex items-center justify-center bg-gradient-to-br from-fuchsia-500 to-violet-500" style={{ clipPath: "polygon(20% 0,100% 0,80% 100%,0 100%)" }}>
               <Swords size={14} className="text-white" />
             </div>
-            <span className="font-display font-bold text-white text-sm">CAMPUS CLASH</span>
+            <span className="font-display font-bold text-white text-sm">ARENA CLASH</span>
           </div>
-          <p className="text-sm text-slate-500 leading-relaxed">The official esports tournament platform for KL University.</p>
+          <p className="text-sm text-slate-500 leading-relaxed">Competitive esports tournaments. Build your record, squad and reputation.</p>
           <div className="flex gap-3 mt-4 text-slate-500">
-            <Camera size={16} className="hover:text-cyan-400 cursor-pointer transition-colors" />
-            <Tv size={16} className="hover:text-cyan-400 cursor-pointer transition-colors" />
-            <Play size={16} className="hover:text-cyan-400 cursor-pointer transition-colors" />
+            <Camera size={16} className="hover:text-fuchsia-300 cursor-pointer transition-colors" />
+            <Tv size={16} className="hover:text-fuchsia-300 cursor-pointer transition-colors" />
+            <Play size={16} className="hover:text-fuchsia-300 cursor-pointer transition-colors" />
           </div>
         </div>
         <div>
           <p className="hud-label mb-3">Platform</p>
           <div className="flex flex-col gap-2 text-sm text-slate-400">
-            <Link to="/tournaments" className="hover:text-cyan-400 transition-colors">Tournaments</Link>
-            <Link to="/leaderboard" className="hover:text-cyan-400 transition-colors">Leaderboard</Link>
-            <Link to="/schedule" className="hover:text-cyan-400 transition-colors">Schedule</Link>
+            <Link to="/tournaments" className="hover:text-fuchsia-300 transition-colors">Tournaments</Link>
+            <Link to="/leaderboard" className="hover:text-fuchsia-300 transition-colors">Leaderboard</Link>
+            <Link to="/schedule" className="hover:text-fuchsia-300 transition-colors">Schedule</Link>
           </div>
         </div>
         <div>
           <p className="hud-label mb-3">Account</p>
           <div className="flex flex-col gap-2 text-sm text-slate-400">
-            <Link to="/login" className="hover:text-cyan-400 transition-colors">Login</Link>
-            <Link to="/signup" className="hover:text-cyan-400 transition-colors">Sign Up</Link>
-            <Link to="/dashboard" className="hover:text-cyan-400 transition-colors">Dashboard</Link>
+            <Link to="/login" className="hover:text-fuchsia-300 transition-colors">Login</Link>
+            <Link to="/signup" className="hover:text-fuchsia-300 transition-colors">Sign Up</Link>
+            <Link to="/dashboard" className="hover:text-fuchsia-300 transition-colors">Dashboard</Link>
           </div>
         </div>
         <div>
@@ -45,7 +45,7 @@ export default function Footer() {
         </div>
       </div>
       <div className="border-t border-white/10 py-5 text-center text-xs text-slate-600 font-hud tracking-wide">
-        © 2026 CAMPUS CLASH — BUILT FOR STUDENTS, BY STUDENTS.
+        © 2026 ARENA CLASH — BUILT FOR COMPETITORS, BY COMPETITORS.
       </div>
     </footer>
   );
