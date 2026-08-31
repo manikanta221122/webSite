@@ -295,7 +295,7 @@ export function DataProvider({ children }) {
 
     const { data: payment, error } = await supabase
       .from("payments")
-      .insert({ registration_id: registration.id, amount: tournament.entryFee, utr: details.utr.trim(), payer_upi: details.payerUpi?.trim() })
+      .insert({ registration_id: registration.id, amount: tournament.entryFee, provider: "upi_manual", utr: details.utr.trim(), payer_upi: details.payerUpi?.trim() })
       .select()
       .single();
     if (error) {
