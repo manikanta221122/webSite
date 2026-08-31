@@ -92,7 +92,7 @@ export default function TournamentDetails() {
                 <ShieldCheck size={16} className="text-cyan-400" />
                 <p className="hud-label">Eligibility</p>
               </div>
-              <p className="text-sm text-slate-400">Open to all verified students of KL University. College ID and email verification required at registration.</p>
+              <p className="text-sm text-slate-400">Open to verified students of KL University. Use your registered account and game identity when joining.</p>
             </div>
             <div className="panel p-5 h-fit">
               <div className="flex items-center gap-2 mb-3"><CircleDollarSign size={16} className="text-volt-400" /><p className="hud-label">Prize & payment policy</p></div>
