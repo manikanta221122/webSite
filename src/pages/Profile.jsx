@@ -28,7 +28,7 @@ export default function Profile() {
             <h1 className="font-display text-2xl font-bold text-white">{user.name}</h1>
             {user.verified && (
               <span className="badge flex items-center gap-1 bg-cyan-500/10 text-cyan-300 border border-cyan-500/25">
-                <ShieldCheck size={12} /> Verified College Student
+                <ShieldCheck size={12} /> Verified Player
               </span>
             )}
           </div>
@@ -50,6 +50,16 @@ export default function Profile() {
         <div className="panel p-5">
           <p className="font-hud font-bold text-white text-lg">{played.length}</p>
           <p className="hud-label text-[10px] mt-1">Matches Played</p>
+        </div>
+      </div>
+
+      <div className="panel p-5 mb-8 border-cyan-500/20 bg-cyan-500/[0.03]">
+        <p className="hud-label text-cyan-400">PLAYER CARD</p>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-4">
+          <div><p className="text-2xl font-display font-black text-white">{myTeam?.points ?? 0}</p><p className="hud-label text-[9px]">POINTS</p></div>
+          <div><p className="text-2xl font-display font-black text-white">{myTeam?.wins ?? 0}</p><p className="hud-label text-[9px]">WINS</p></div>
+          <div><p className="text-2xl font-display font-black text-white">{played.length}</p><p className="hud-label text-[9px]">MATCHES</p></div>
+          <div><p className="text-2xl font-display font-black text-white">#{Math.max(1, teams.slice().sort((a,b)=>(b.points||0)-(a.points||0)).findIndex(t=>t.id===myTeam?.id)+1)}</p><p className="hud-label text-[9px]">RANK</p></div>
         </div>
       </div>
 
