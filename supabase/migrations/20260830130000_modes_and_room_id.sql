@@ -20,3 +20,11 @@ alter table public.matches
 -- No RLS changes needed: existing row-level policies on `tournaments` and
 -- `matches` already govern these new columns the same way as the rest of
 -- each row (public/anon can read, only admins can write).
+
+
+-- Tournament-level room credentials are managed by administrators and
+-- announced to players from the tournament page.
+alter table public.tournaments
+  add column if not exists room_id text check (room_id is null or char_length(trim(room_id)) between 1 and 40),
+  add column if not exists room_password text check (room_password is null or char_length(trim(room_password)) between 1 and 40);
+
