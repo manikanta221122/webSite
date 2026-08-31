@@ -9,7 +9,6 @@ function toUser(authUser, profile) {
     id: authUser.id,
     name: profile.full_name,
     email: authUser.email,
-    collegeId: profile.college_id,
     role: profile.role,
     verified: profile.verified,
   };
@@ -57,11 +56,11 @@ export function AuthProvider({ children }) {
     };
   }, [syncFromSession]);
 
-  const signup = async ({ name, email, collegeId, password }) => {
+  const signup = async ({ name, email, password }) => {
     const { data, error } = await supabase.auth.signUp({
       email: email.trim().toLowerCase(),
       password,
-      options: { data: { full_name: name.trim(), college_id: collegeId.trim() } },
+      options: { data: { full_name: name.trim() } },
     });
     if (error) throw new Error(error.message);
     if (!data.session) {
