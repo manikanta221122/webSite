@@ -8,6 +8,7 @@ export default async function handler(req, res) {
     if (!token) return send(res, 401, { error: "Authentication required." });
     const { data: authData, error: authError } = await supabase.auth.getUser(token);
     if (authError || !authData.user) return send(res, 401, { error: "Invalid session." });
+    if (!authData.user.email_confirmed_at) return send(res, 403, { error: "Please verify your email before making a payment." });
     const { tournamentId, teamId } = req.body || {};
     const { data: registration, error: registrationError } = await supabase.from("registrations").select("id,tournament_id,team_id,status,teams!inner(captain_id)").eq("tournament_id", tournamentId).eq("team_id", teamId).eq("teams.captain_id", authData.user.id).single();
     if (registrationError || !registration) return send(res, 403, { error: "You are not the captain of this registration." });
