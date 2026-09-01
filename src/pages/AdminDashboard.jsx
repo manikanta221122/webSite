@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { Users, Trophy, Radio, Shield, Check, X, Ban, PlusCircle, CheckCircle2, Gamepad2, ArrowUpRight, Settings2, Swords, CalendarClock, KeyRound } from "lucide-react";
+import { Users, Trophy, Radio, Shield, Check, X, Ban, PlusCircle, CheckCircle2, Gamepad2, ArrowUpRight, Settings2, Swords, CalendarClock, KeyRound, Lock, Unlock, ExternalLink, Save } from "lucide-react";
 import { useData } from "../context/DataContext";
 
 import { gameMeta, modesForGame } from "../data/gameMeta";
@@ -395,19 +395,36 @@ function MatchResultRow({ match, teams, onSave, onSetTeam }) {
   const [status, setStatus] = useState(match.status);
   const [roomId, setRoomId] = useState(match.roomId ?? "");
   const [roomPassword, setRoomPassword] = useState(match.roomPassword ?? "");
+  const [notes, setNotes] = useState(match.resultNotes ?? "");
+  const [evidenceUrl, setEvidenceUrl] = useState(match.resultEvidenceUrl ?? "");
+  const [stats, setStats] = useState({});
+  const [showStats, setShowStats] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [savingStats, setSavingStats] = useState(false);
   const [error, setError] = useState("");
 
-  const save = async () => {
-    setSaving(true);
-    setError("");
+  const allPlayers = teams.flatMap(t => (t.players || []).filter(p => !p.substitute).map(p => ({...p, teamId:t.id, teamName:t.name})));
+  const loadStats = async () => {
+    setShowStats(true);
+    const { data, error: e } = await supabase.from("match_player_stats").select("*").eq("match_id", match.id);
+    if (e) { setError(e.message); return; }
+    const next = {};
+    (data || []).forEach(s => { next[s.team_player_id] = s; });
+    allPlayers.forEach(p => { if (!next[p.id]) next[p.id] = { team_player_id:p.id, team_id:p.teamId, kills:0, assists:0, played:true, notes:"" }; });
+    setStats(next);
+  };
+  const save = async (lockResult = false) => {
+    setSaving(true); setError("");
+    try { await onSave(match.id, { scoreA, scoreB, killsA, killsB, status, roomId, roomPassword, resultNotes:notes, resultEvidenceUrl:evidenceUrl, lockResult, unlockResult:!lockResult && false }); }
+    catch (err) { setError(err.message); } finally { setSaving(false); }
+  };
+  const saveStats = async () => {
+    setSavingStats(true); setError("");
     try {
-      await onSave(match.id, { scoreA, scoreB, killsA, killsB, status, roomId, roomPassword });
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setSaving(false);
-    }
+      const rows = allPlayers.map(p => ({ match_id:match.id, team_id:p.teamId, team_player_id:p.id, kills:Number(stats[p.id]?.kills||0), assists:Number(stats[p.id]?.assists||0), played:stats[p.id]?.played !== false, notes:stats[p.id]?.notes||"", updated_at:new Date().toISOString() }));
+      const { error:e } = await supabase.from("match_player_stats").upsert(rows, { onConflict:"match_id,team_player_id" });
+      if (e) throw new Error(e.message);
+    } catch (err) { setError(err.message); } finally { setSavingStats(false); }
   };
 
   return (
@@ -417,43 +434,43 @@ function MatchResultRow({ match, teams, onSave, onSetTeam }) {
           <p className="hud-label text-volt-400">{match.round} · Match #{match.matchNumber}</p>
           <p className="font-hud font-semibold text-white text-sm mt-1">{match.teamA} vs {match.teamB}</p>
         </div>
-        <Link to={`/match/${match.id}`} className="btn-outline text-[10px] px-3 py-2 shrink-0">Open live page</Link>
-      </div>
-
-      {!match.teamAId && (
-        <select onChange={(e) => e.target.value && onSetTeam(match.id, "A", e.target.value)} defaultValue="" className="input-field text-xs mb-2">
-          <option value="">Set Team A (currently "{match.teamA}")…</option>
-          {teams.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
-        </select>
-      )}
-      {!match.teamBId && (
-        <select onChange={(e) => e.target.value && onSetTeam(match.id, "B", e.target.value)} defaultValue="" className="input-field text-xs mb-3">
-          <option value="">Set Team B (currently "{match.teamB}")…</option>
-          {teams.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
-        </select>
-      )}
-
-      <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
-        <div><label className="label-field text-[9px]">Score A</label><input type="number" min="0" value={scoreA} onChange={(e) => setScoreA(Number(e.target.value))} className="input-field text-sm py-1.5" /></div>
-        <div><label className="label-field text-[9px]">Score B</label><input type="number" min="0" value={scoreB} onChange={(e) => setScoreB(Number(e.target.value))} className="input-field text-sm py-1.5" /></div>
-        <div><label className="label-field text-[9px]">Kills A</label><input type="number" min="0" value={killsA} onChange={(e) => setKillsA(Number(e.target.value))} className="input-field text-sm py-1.5" /></div>
-        <div><label className="label-field text-[9px]">Kills B</label><input type="number" min="0" value={killsB} onChange={(e) => setKillsB(Number(e.target.value))} className="input-field text-sm py-1.5" /></div>
-        <div>
-          <label className="label-field text-[9px]">Status</label>
-          <select value={status} onChange={(e) => setStatus(e.target.value)} className="input-field text-sm py-1.5">
-            <option value="upcoming">Upcoming</option>
-            <option value="live">Live</option>
-            <option value="completed">Completed</option>
-            <option value="cancelled">Cancelled</option>
-          </select>
+        <div className="flex gap-2">
+          {match.resultLockedAt && <span className="btn-outline text-[10px] px-3 py-2 border-amber-400/40 text-amber-300"><Lock size={11} className="inline mr-1"/> Result Locked</span>}
+          <Link to={`/match/${match.id}`} className="btn-outline text-[10px] px-3 py-2 shrink-0">Open live page</Link>
         </div>
       </div>
-      <div className="grid grid-cols-2 gap-2 mt-2">
-        <div><label className="label-field text-[9px] flex items-center gap-1"><KeyRound size={10} /> Room ID</label><input value={roomId} onChange={(e) => setRoomId(e.target.value)} className="input-field text-sm py-1.5" placeholder="Announce room ID" /></div>
-        <div><label className="label-field text-[9px]">Room Password</label><input value={roomPassword} onChange={(e) => setRoomPassword(e.target.value)} className="input-field text-sm py-1.5" placeholder="Optional" /></div>
+
+      {!match.teamAId && <select onChange={(e) => e.target.value && onSetTeam(match.id, "A", e.target.value)} defaultValue="" className="input-field text-xs mb-2"><option value="">Set Team A (currently "{match.teamA}")…</option>{teams.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}</select>}
+      {!match.teamBId && <select onChange={(e) => e.target.value && onSetTeam(match.id, "B", e.target.value)} defaultValue="" className="input-field text-xs mb-3"><option value="">Set Team B (currently "{match.teamB}")…</option>{teams.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}</select>}
+
+      <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+        <div><label className="label-field text-[9px]">Score A</label><input disabled={!!match.resultLockedAt} type="number" min="0" value={scoreA} onChange={(e) => setScoreA(Number(e.target.value))} className="input-field text-sm py-1.5" /></div>
+        <div><label className="label-field text-[9px]">Score B</label><input disabled={!!match.resultLockedAt} type="number" min="0" value={scoreB} onChange={(e) => setScoreB(Number(e.target.value))} className="input-field text-sm py-1.5" /></div>
+        <div><label className="label-field text-[9px]">Kills A</label><input disabled={!!match.resultLockedAt} type="number" min="0" value={killsA} onChange={(e) => setKillsA(Number(e.target.value))} className="input-field text-sm py-1.5" /></div>
+        <div><label className="label-field text-[9px]">Kills B</label><input disabled={!!match.resultLockedAt} type="number" min="0" value={killsB} onChange={(e) => setKillsB(Number(e.target.value))} className="input-field text-sm py-1.5" /></div>
+        <div><label className="label-field text-[9px]">Status</label><select disabled={!!match.resultLockedAt} value={status} onChange={(e) => setStatus(e.target.value)} className="input-field text-sm py-1.5"><option value="upcoming">Upcoming</option><option value="live">Live</option><option value="completed">Completed</option><option value="cancelled">Cancelled</option></select></div>
       </div>
+
+      <div className="grid md:grid-cols-2 gap-2 mt-2">
+        <div><label className="label-field text-[9px]">Evidence URL (screenshot/video)</label><input disabled={!!match.resultLockedAt} value={evidenceUrl} onChange={e=>setEvidenceUrl(e.target.value)} className="input-field text-sm py-1.5" placeholder="https://..." /></div>
+        <div><label className="label-field text-[9px]">Admin result notes</label><input disabled={!!match.resultLockedAt} value={notes} onChange={e=>setNotes(e.target.value)} className="input-field text-sm py-1.5" placeholder="Reason, dispute outcome, etc." /></div>
+      </div>
+
       {error && <p className="text-live-400 text-xs mt-2">{error}</p>}
-      <button onClick={save} disabled={saving} className="btn-outline text-xs px-4 py-2 mt-3 disabled:opacity-50">{saving ? "Saving…" : "Save result"}</button>
+      <div className="flex flex-wrap gap-2 mt-3">
+        <button disabled={saving || !!match.resultLockedAt} onClick={()=>save(false)} className="btn-outline text-xs px-4 py-2 disabled:opacity-50"><Save size={12} className="inline mr-1"/>{saving ? "Saving…" : "Save result"}</button>
+        <button disabled={saving || !!match.resultLockedAt || status !== "completed"} onClick={()=>save(true)} className="btn-primary text-xs px-4 py-2 disabled:opacity-50"><Lock size={12} className="inline mr-1"/>Confirm & Lock Result</button>
+        <button onClick={loadStats} className="btn-outline text-xs px-4 py-2">{showStats ? "Refresh player stats" : "Enter player stats"}</button>
+        {match.resultEvidenceUrl && <a href={match.resultEvidenceUrl} target="_blank" rel="noreferrer" className="btn-ghost text-xs px-3 py-2">View evidence <ExternalLink size={12} className="inline"/></a>}
+      </div>
+
+      {showStats && (
+        <div className="mt-4 border-t border-white/10 pt-4">
+          <div className="flex items-center justify-between mb-3"><div><p className="hud-label">Player performance</p><p className="text-xs text-slate-500">Record each registered player's match stats.</p></div><button onClick={saveStats} disabled={savingStats || !!match.resultLockedAt} className="btn-outline text-xs px-3 py-2 disabled:opacity-50">{savingStats ? "Saving…" : "Save player stats"}</button></div>
+          <div className="overflow-x-auto"><table className="w-full text-xs min-w-[650px]"><thead><tr className="border-b border-white/10 text-left"><th className="hud-label py-2">Player</th><th className="hud-label py-2">UID / IGN</th><th className="hud-label py-2">Kills</th><th className="hud-label py-2">Assists</th><th className="hud-label py-2">Played</th><th className="hud-label py-2">Notes</th></tr></thead><tbody>{allPlayers.map(p=>{const s=stats[p.id]||{};return <tr key={p.id} className="border-b border-white/5"><td className="py-2 text-white">{p.name}</td><td className="py-2 text-slate-500">{p.gameUid} · {p.ign}</td><td className="py-2"><input disabled={!!match.resultLockedAt} type="number" min="0" value={s.kills||0} onChange={e=>setStats(x=>({...x,[p.id]:{...s,kills:Number(e.target.value)}}))} className="input-field w-20 text-xs py-1"/></td><td className="py-2"><input disabled={!!match.resultLockedAt} type="number" min="0" value={s.assists||0} onChange={e=>setStats(x=>({...x,[p.id]:{...s,assists:Number(e.target.value)}}))} className="input-field w-20 text-xs py-1"/></td><td className="py-2"><input disabled={!!match.resultLockedAt} type="checkbox" checked={s.played!==false} onChange={e=>setStats(x=>({...x,[p.id]:{...s,played:e.target.checked}}))}/></td><td className="py-2"><input disabled={!!match.resultLockedAt} value={s.notes||""} onChange={e=>setStats(x=>({...x,[p.id]:{...s,notes:e.target.value}}))} className="input-field text-xs py-1"/></td></tr>})}</tbody></table></div>
+        </div>
+      )}
     </div>
   );
 }
+
