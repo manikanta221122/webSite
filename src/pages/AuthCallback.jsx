@@ -11,7 +11,9 @@ export default function AuthCallback() {
     const finish = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!active) return;
-      navigate(session ? "/dashboard" : "/login", { replace: true });
+      if (!session) return navigate("/login", { replace: true });
+      const { data: profile } = await supabase.from("profiles").select("role").eq("id", session.user.id).maybeSingle();
+      navigate(profile?.role === "admin" ? "/admin" : "/dashboard", { replace: true });
     };
     finish();
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
