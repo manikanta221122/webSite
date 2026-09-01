@@ -9,6 +9,7 @@ import Schedule from "./pages/Schedule";
 import Leaderboard from "./pages/Leaderboard";
 import LiveMatch from "./pages/LiveMatch";
 import Login from "./pages/Login";
+import AuthCallback from "./pages/AuthCallback";
 import Signup from "./pages/Signup";
 import Dashboard from "./pages/Dashboard";
 import AdminDashboard from "./pages/AdminDashboard";
@@ -30,6 +31,7 @@ export default function App() {
         <Route path="/schedule" element={<Schedule />} />
         <Route path="/leaderboard" element={<Leaderboard />} />
         <Route path="/match/:id" element={<LiveMatch />} />
+        <Route path="/auth/callback" element={<AuthCallback />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/dashboard" element={<RoleRoute role="player"><Dashboard /></RoleRoute>} />
