@@ -107,9 +107,9 @@ export default function AdminDashboard() {
       </div>
 
       <div className="flex items-center gap-1 border-b border-white/10 mb-7 overflow-x-auto no-scrollbar">
-        {["overview", "tournaments", "matches", "payments", "reports", "users"].map((tab) => (
+        {[["overview", "Overview"], ["tournaments", "Tournaments"], ["matches", "Matches"], ["payments", "Payments"], ["reports", "Reports"], ["users", "Users"]].map(([tab, label]) => (
           <button key={tab} onClick={() => setActiveTab(tab)} className={`px-4 py-3 font-hud text-xs uppercase tracking-wider whitespace-nowrap border-b-2 transition-colors ${activeTab === tab ? "text-cyan-300 border-cyan-400" : "text-slate-500 border-transparent hover:text-slate-200"}`}>
-            {tab}
+            {label}
           </button>
         ))}
       </div>
@@ -152,7 +152,7 @@ export default function AdminDashboard() {
         </form>
       )}
 
-      {!showForm && (
+      {activeTab === "matches" && !showForm && (
         <section className="panel p-6 mb-7">
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-6">
             <div><p className="hud-label text-violet-300">Tournament control</p><h2 className="font-display text-2xl font-bold text-white mt-1">Bracket Manager</h2><p className="text-sm text-slate-500 mt-2">Visualize every round and manage each match from one place.</p></div>
@@ -184,7 +184,7 @@ export default function AdminDashboard() {
         </section>
       )}
 
-      {editingTournament && editForm && (
+      {activeTab === "tournaments" && editingTournament && editForm && (
         <>
         <section className="panel p-6 mb-7 border-fuchsia-500/20 bg-fuchsia-500/[0.02]">
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-5">
