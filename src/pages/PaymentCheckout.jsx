@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, Navigate, useParams, useSearchParams } from "react-router-dom";
 import { CheckCircle2, Copy, ShieldCheck, Smartphone, TriangleAlert } from "lucide-react";
 import { useData } from "../context/DataContext";
@@ -11,13 +11,13 @@ export default function PaymentCheckout() {
   const tournament = tournaments.find((item) => item.id === id);
   const team = teams.find((item) => item.id === params.get("team") && item.tournamentIds?.includes(id));
   const payment = payments.find((item) => item.teamId === team?.id && item.tournamentId === id);
-  const [method, setMethod] = useState(import.meta.env.VITE_RAZORPAY_KEY_ID ? "gateway" : "manual");
+  const [method, setMethod] = useState(import.meta.env.VITE_RAZORPAY_KEY_ID ? "gateway" : "manual"); const [upiId, setUpiId] = useState(""); const [upiName, setUpiName] = useState("Campus Clash Esports Cell"); useEffect(() => { supabase.from("app_settings").select("admin_upi_id,admin_upi_name").eq("id", true).maybeSingle().then(({ data }) => { if (data?.admin_upi_id) setUpiId(data.admin_upi_id); if (data?.admin_upi_name) setUpiName(data.admin_upi_name); }); }, []);
   const [utr, setUtr] = useState("");
   const [payerUpi, setPayerUpi] = useState("");
   const [error, setError] = useState("");
   const [gatewayError, setGatewayError] = useState("");
   const [gatewayLoading, setGatewayLoading] = useState(false);
-  const upiId = "manikantasai.patel@oksbi";
+ 
   const razorpayKey = import.meta.env.VITE_RAZORPAY_KEY_ID;
 
   if (!tournament || !team) return <Navigate to={`/tournaments/${id}`} replace />;
@@ -123,13 +123,13 @@ export default function PaymentCheckout() {
       {!razorpayKey && <p className="text-amber-300/80 text-xs mt-3">Add the Razorpay environment variables to Vercel before enabling live gateway payments. Direct UPI works now.</p>}
     </div> : <form onSubmit={submit} className="panel p-5 mt-4">
       <p className="text-sm text-slate-400 mb-3">Send the exact amount to the admin UPI below, then submit the UTR for manual verification.</p>
-      <div className="flex items-center justify-between gap-3 bg-white/5 px-4 py-3"><code className="text-cyan-300 font-hud">{upiId}</code><button type="button" onClick={copyUpi} className="btn-ghost flex items-center gap-1"><Copy size={14} /> Copy</button></div>
+      <div className="flex items-center justify-between gap-3 bg-white/5 px-4 py-3"><code className="text-cyan-300 font-hud">{upiId || "UPI ID not configured"}</code><button type="button" onClick={copyUpi} className="btn-ghost flex items-center gap-1"><Copy size={14} /> Copy</button></div>
       <label className="label-field mt-4 block">UPI transaction reference / UTR</label>
       <input required value={utr} onChange={(e) => setUtr(e.target.value)} className="input-field" placeholder="e.g. 423456789012" />
       <label className="label-field mt-4 block">Your UPI ID</label>
       <input required value={payerUpi} onChange={(e) => setPayerUpi(e.target.value)} className="input-field" placeholder="name@bank" />
       {error && <p className="text-live-400 text-xs mt-3">{error}</p>}
-      <button className="btn-primary w-full mt-6">Submit for verification</button>
+      <button disabled={!upiId} className="btn-primary w-full mt-6 disabled:opacity-50">Submit for verification</button>
     </form>}
 
     <div className="flex gap-3 mt-5 text-xs text-slate-500"><ShieldCheck size={17} className="text-cyan-400 shrink-0" /><p>Gateway payments are verified server-side before the registration is confirmed.</p></div>
