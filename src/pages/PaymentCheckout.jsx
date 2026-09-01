@@ -11,7 +11,18 @@ export default function PaymentCheckout() {
   const tournament = tournaments.find((item) => item.id === id);
   const team = teams.find((item) => item.id === params.get("team") && item.tournamentIds?.includes(id));
   const payment = payments.find((item) => item.teamId === team?.id && item.tournamentId === id);
-  const [method, setMethod] = useState(import.meta.env.VITE_RAZORPAY_KEY_ID ? "gateway" : "manual"); const [upiId, setUpiId] = useState(""); const [upiName, setUpiName] = useState("Campus Clash Esports Cell"); useEffect(() => { supabase.from("app_settings").select("admin_upi_id,admin_upi_name").eq("id", true).maybeSingle().then(({ data }) => { if (data?.admin_upi_id) setUpiId(data.admin_upi_id); if (data?.admin_upi_name) setUpiName(data.admin_upi_name); }); }, []);
+  // Manual UPI is intentionally the only payment method for the first tournaments.
+  // Razorpay remains in the codebase and can be re-enabled later.
+  const [method] = useState("manual");
+  const [upiId, setUpiId] = useState("");
+  const [upiName, setUpiName] = useState("Arena Clash");
+  useEffect(() => {
+    supabase.from("app_settings").select("admin_upi_id,admin_upi_name").eq("id", true).maybeSingle()
+      .then(({ data }) => {
+        if (data?.admin_upi_id) setUpiId(data.admin_upi_id);
+        if (data?.admin_upi_name) setUpiName(data.admin_upi_name);
+      });
+  }, []);
   const [utr, setUtr] = useState("");
   const [payerUpi, setPayerUpi] = useState("");
   const [error, setError] = useState("");
@@ -111,26 +122,25 @@ export default function PaymentCheckout() {
       </div>
     </div>
 
-    <div className="grid grid-cols-2 gap-2 mt-5">
-      <button type="button" onClick={() => setMethod("gateway")} className={`btn-outline ${method === "gateway" ? "border-cyan-400 text-cyan-300" : ""}`}>Razorpay</button>
-      <button type="button" onClick={() => setMethod("manual")} className={`btn-outline ${method === "manual" ? "border-cyan-400 text-cyan-300" : ""}`}>Direct UPI</button>
+    <div className="panel p-5 mt-5">
+      <div className="flex items-center justify-between gap-3">
+        <div><p className="hud-label text-cyan-400">Manual UPI</p><p className="text-white font-semibold mt-1">Pay {upiName}</p></div>
+        <span className="text-xs px-2 py-1 rounded-full bg-amber-400/10 text-amber-300 border border-amber-400/20">Admin verification</span>
+      </div>
+      <p className="text-sm text-slate-400 mt-3">Send the exact entry fee to the UPI ID below. Then submit your UTR. Your registration is confirmed only after an admin verifies the payment.</p>
+      <div className="flex items-center justify-between gap-3 bg-white/5 px-4 py-3 mt-4">
+        <code className="text-cyan-300 font-hud">{upiId || "UPI ID not configured yet"}</code>
+        <button type="button" onClick={copyUpi} disabled={!upiId} className="btn-ghost flex items-center gap-1 disabled:opacity-40"><Copy size={14} /> Copy</button>
+      </div>
+      <form onSubmit={submit}>
+        <label className="label-field mt-4 block">UPI transaction reference / UTR</label>
+        <input required value={utr} onChange={(e) => setUtr(e.target.value)} className="input-field" placeholder="e.g. 423456789012" />
+        <label className="label-field mt-4 block">Your UPI ID</label>
+        <input required value={payerUpi} onChange={(e) => setPayerUpi(e.target.value)} className="input-field" placeholder="name@bank" />
+        {error && <p className="text-live-400 text-xs mt-3">{error}</p>}
+        <button disabled={!upiId} className="btn-primary w-full mt-6 disabled:opacity-50">{upiId ? "Submit Payment for Verification" : "UPI Payment Not Configured"}</button>
+      </form>
     </div>
-
-    {method === "gateway" ? <div className="panel p-5 mt-4">
-      <p className="text-sm text-slate-300">Use Razorpay Checkout for UPI, cards, net banking and other payment methods enabled for your account.</p>
-      <button type="button" onClick={payWithRazorpay} disabled={gatewayLoading} className="btn-primary w-full mt-5">{gatewayLoading ? "Opening secure checkout…" : `Pay ₹${Number(tournament.entryFee).toLocaleString("en-IN")} securely`}</button>
-      {gatewayError && <p className="text-live-400 text-xs mt-3">{gatewayError}</p>}
-      {!razorpayKey && <p className="text-amber-300/80 text-xs mt-3">Add the Razorpay environment variables to Vercel before enabling live gateway payments. Direct UPI works now.</p>}
-    </div> : <form onSubmit={submit} className="panel p-5 mt-4">
-      <p className="text-sm text-slate-400 mb-3">Send the exact amount to the admin UPI below, then submit the UTR for manual verification.</p>
-      <div className="flex items-center justify-between gap-3 bg-white/5 px-4 py-3"><code className="text-cyan-300 font-hud">{upiId || "UPI ID not configured"}</code><button type="button" onClick={copyUpi} className="btn-ghost flex items-center gap-1"><Copy size={14} /> Copy</button></div>
-      <label className="label-field mt-4 block">UPI transaction reference / UTR</label>
-      <input required value={utr} onChange={(e) => setUtr(e.target.value)} className="input-field" placeholder="e.g. 423456789012" />
-      <label className="label-field mt-4 block">Your UPI ID</label>
-      <input required value={payerUpi} onChange={(e) => setPayerUpi(e.target.value)} className="input-field" placeholder="name@bank" />
-      {error && <p className="text-live-400 text-xs mt-3">{error}</p>}
-      <button disabled={!upiId} className="btn-primary w-full mt-6 disabled:opacity-50">Submit for verification</button>
-    </form>}
 
     <div className="flex gap-3 mt-5 text-xs text-slate-500"><ShieldCheck size={17} className="text-cyan-400 shrink-0" /><p>Gateway payments are verified server-side before the registration is confirmed.</p></div>
     <div className="flex gap-3 mt-4 text-xs text-amber-300/80"><TriangleAlert size={17} className="shrink-0" /><p>Never share your UPI PIN, OTP, card CVV, or bank password with anyone.</p></div>
