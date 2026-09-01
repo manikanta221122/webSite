@@ -7,7 +7,7 @@ import { gameMeta, modesForGame } from "../data/gameMeta";
 import { useAuth } from "../context/AuthContext";
 import { supabase } from "../lib/supabase";
 
-const emptyForm = { name: "", game: "freefire", mode: modesForGame("freefire")[0].id, description: "", prizePool: "", firstPrize: "", secondPrize: "", thirdPrize: "", entryFee: "0", maxTeams: "16", registrationDeadline: "", startDate: "", rules: "", roomId: "", roomPassword: "" };
+const emptyForm = { name: "", game: "freefire", mode: modesForGame("freefire")[0].id, description: "", prizePool: "", firstPrize: "", secondPrize: "", thirdPrize: "", entryFee: "0", maxTeams: "16", registrationDeadline: "", startDate: "", rules: "", roomId: "", roomPassword: "", freeEntry: true, prizeCount: 3 };
 const ROUND_OPTIONS = ["Round 1", "Round 2", "Quarter Final", "Semi Final", "Grand Final"];
 const emptyMatchForm = { tournamentId: "", round: "Round 1", matchNumber: "1", teamAId: "", teamALabel: "TBD", teamBId: "", teamBLabel: "TBD", scheduledAt: "", roomId: "", roomPassword: "" };
 
@@ -133,8 +133,15 @@ export default function AdminDashboard() {
             <div><label className="label-field">Mode</label><select value={form.mode} onChange={(e) => update("mode", e.target.value)} className="input-field">{modesForGame(form.game).map((m) => <option key={m.id} value={m.id}>{m.name} — {m.teamSize} player{m.teamSize > 1 ? "s" : ""}/team</option>)}</select></div>
             <div className="sm:col-span-2"><label className="label-field">Description</label><textarea required value={form.description} onChange={(e) => update("description", e.target.value)} className="input-field min-h-[100px]" placeholder="Tell students what this tournament is about..." /></div>
             <div><label className="label-field">Prize Pool (₹)</label><input required min="0" type="number" value={form.prizePool} onChange={(e) => update("prizePool", e.target.value)} className="input-field" placeholder="10000" /></div>
-            <div><label className="label-field">Entry Fee (₹)</label><input min="0" type="number" value={form.entryFee} onChange={(e) => update("entryFee", e.target.value)} className="input-field" placeholder="0" /></div>
-            <div className="sm:col-span-2"><label className="label-field">Published prize split <span className="text-slate-600 normal-case tracking-normal">(must not exceed prize pool)</span></label><div className="grid grid-cols-3 gap-3"><input min="0" type="number" value={form.firstPrize} onChange={(e) => update("firstPrize", e.target.value)} className="input-field" placeholder="1st prize" /><input min="0" type="number" value={form.secondPrize} onChange={(e) => update("secondPrize", e.target.value)} className="input-field" placeholder="2nd prize" /><input min="0" type="number" value={form.thirdPrize} onChange={(e) => update("thirdPrize", e.target.value)} className="input-field" placeholder="3rd prize" /></div></div>
+            <div>
+<label className="label-field">Entry</label>
+<div className="flex gap-2">
+<button type="button" onClick={()=>{update("freeEntry",true);update("entryFee","0")}} className={`btn-outline flex-1 ${form.freeEntry?"border-cyan-400 text-cyan-300":""}`}>Free Tournament</button>
+<button type="button" onClick={()=>update("freeEntry",false)} className={`btn-outline flex-1 ${!form.freeEntry?"border-cyan-400 text-cyan-300":""}`}>Paid</button>
+</div>
+{!form.freeEntry && <input min="1" required type="number" value={form.entryFee} onChange={(e)=>update("entryFee",e.target.value)} className="input-field mt-2" placeholder="Entry fee (₹)" />}
+</div>
+            <div className="sm:col-span-2"><label className="label-field">Prize Places</label><select value={form.prizeCount} onChange={e=>update("prizeCount",Number(e.target.value))} className="input-field"><option value="1">1st place only</option><option value="2">1st + 2nd</option><option value="3">1st + 2nd + 3rd</option></select><div className="grid grid-cols-3 gap-3 mt-3"><input min="0" type="number" value={form.firstPrize} onChange={(e) => update("firstPrize", e.target.value)} className="input-field" placeholder="1st prize" />{form.prizeCount>=2&&<input min="0" type="number" value={form.secondPrize} onChange={(e) => update("secondPrize", e.target.value)} className="input-field" placeholder="2nd prize" />}{form.prizeCount>=3&&<input min="0" type="number" value={form.thirdPrize} onChange={(e) => update("thirdPrize", e.target.value)} className="input-field" placeholder="3rd prize" />}</div><p className="text-xs text-slate-600 mt-2">Prize amounts must not exceed the advertised prize pool.</p></div>
             <div><label className="label-field">Maximum Teams</label><input required min="2" type="number" value={form.maxTeams} onChange={(e) => update("maxTeams", e.target.value)} className="input-field" /></div>
             <div><label className="label-field">Registration Deadline</label><input required type="date" value={form.registrationDeadline} onChange={(e) => update("registrationDeadline", e.target.value)} className="input-field" /></div>
             <div><label className="label-field">Tournament Date</label><input required type="date" value={form.startDate} onChange={(e) => update("startDate", e.target.value)} className="input-field" /></div>
