@@ -14,6 +14,7 @@ export default function TeamRegistration() {
 
   const [teamName, setTeamName] = useState("");
   const [captainName, setCaptainName] = useState("");
+  const [college, setCollege] = useState("");
   const [players, setPlayers] = useState(() => Array.from({ length: tournament?.teamSize || 4 }, emptyPlayer));
   const [subEnabled, setSubEnabled] = useState(false);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
@@ -53,6 +54,7 @@ export default function TeamRegistration() {
     try { team = await registerTeam(id, {
       teamName,
       captainName,
+      college,
       players: [...players, ...(subEnabled && sub.name ? [{ ...sub, substitute: true }] : [])],
     }); } catch (registrationError) { setErrors((current) => ({ ...current, form: registrationError.message })); return; }
     if (Number(tournament.entryFee) > 0) {
@@ -91,7 +93,7 @@ export default function TeamRegistration() {
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-8">
         <div className="panel p-5 border-amber-400/25 bg-amber-400/[0.03]">
-          <div className="flex gap-3"><ShieldAlert size={20} className="text-amber-300 shrink-0 mt-0.5" /><div><p className="font-hud font-semibold text-white">Read before registering</p><ul className="text-sm text-slate-400 mt-3 space-y-2 list-disc pl-4"><li>Only verified college students using their registered game accounts may compete.</li><li>Only the published 1st, 2nd, and 3rd placements receive prize money; other teams do not receive a payout.</li><li>{Number(tournament.entryFee) > 0 ? `Your ₹${tournament.entryFee} entry is confirmed only after admin payment verification. Do not send your UPI PIN or OTP to anyone.` : "This is a free entry event; no payment is required."}</li><li>Cheating, impersonation, or false payment claims can lead to disqualification. Read the tournament rules before continuing.</li></ul></div></div>
+          <div className="flex gap-3"><ShieldAlert size={20} className="text-amber-300 shrink-0 mt-0.5" /><div><p className="font-hud font-semibold text-white">Read before registering</p><ul className="text-sm text-slate-400 mt-3 space-y-2 list-disc pl-4"><li>Only verified players using their registered game accounts may compete.</li><li>Only the published 1st, 2nd, and 3rd placements receive prize money; other teams do not receive a payout.</li><li>{Number(tournament.entryFee) > 0 ? `Your ₹${tournament.entryFee} entry is confirmed only after admin payment verification. Do not send your UPI PIN or OTP to anyone.` : "This is a free entry event; no payment is required."}</li><li>Cheating, impersonation, or false payment claims can lead to disqualification. Read the tournament rules before continuing.</li></ul></div></div>
           <label className="flex items-start gap-3 mt-5 cursor-pointer text-sm text-slate-300"><input type="checkbox" checked={acceptedTerms} onChange={(e) => setAcceptedTerms(e.target.checked)} className="accent-cyan-500 mt-1" /><span>I confirm that my team is eligible, accept the rules and published prize policy, and understand that registration may be rejected for invalid information.</span></label>
           {errors.terms && <p className="text-live-400 text-xs mt-3">{errors.terms}</p>}
         </div>
@@ -107,6 +109,10 @@ export default function TeamRegistration() {
               <label className="label-field">Captain Name</label>
               <input value={captainName} onChange={(e) => setCaptainName(e.target.value)} className="input-field" placeholder="Full name" />
               {errors.captainName && <p className="text-live-400 text-xs mt-1">{errors.captainName}</p>}
+            </div>
+            <div>
+              <label className="label-field">College / Organization <span className="text-slate-600">(optional)</span></label>
+              <input value={college} onChange={(e) => setCollege(e.target.value)} className="input-field" placeholder="e.g. KL University, Open" />
             </div>
           </div>
         </div>
