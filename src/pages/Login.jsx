@@ -8,7 +8,9 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const { login } = useAuth();
+  const [resending, setResending] = useState(false);
+  const [resent, setResent] = useState(false);
+  const { login, resendVerification } = useAuth();
   const navigate = useNavigate();
 
   const handleLogin = async (e) => {
@@ -20,6 +22,7 @@ export default function Login() {
       navigate(loggedIn.role === "admin" ? "/admin" : "/dashboard");
     } catch (loginError) {
       setError(loginError.message);
+      setResent(false);
     } finally {
       setSubmitting(false);
     }
@@ -45,7 +48,33 @@ export default function Login() {
           <label className="label-field">Password</label>
           <input value={password} onChange={(e) => setPassword(e.target.value)} type="password" className="input-field" placeholder="Your password" autoComplete="current-password" minLength={8} required />
         </div>
-        {error && <p className="text-live-400 text-xs">{error}</p>}
+        {error && (
+          <div className="rounded-xl border border-live-500/20 bg-live-500/5 p-3">
+            <p className="text-live-300 text-xs">{error}</p>
+            {/verify your college email first/i.test(error) && (
+              <button
+                type="button"
+                disabled={resending}
+                onClick={async () => {
+                  setResending(true);
+                  setResent(false);
+                  try {
+                    await resendVerification(email);
+                    setResent(true);
+                  } catch (e) {
+                    setError(e.message);
+                  } finally {
+                    setResending(false);
+                  }
+                }}
+                className="text-cyan-300 text-xs font-semibold mt-2 hover:text-white disabled:opacity-50"
+              >
+                {resending ? "Sending verification email…" : "Resend verification email"}
+              </button>
+            )}
+            {resent && <p className="text-emerald-300 text-xs mt-1">Verification email sent. Check your inbox and spam folder.</p>}
+          </div>
+        )}
         <div className="flex gap-2 items-start text-xs text-slate-500">
           <ShieldCheck size={15} className="text-cyan-400 mt-0.5 shrink-0" />
           <span>OTP is used only once during signup to verify your college email. Login uses your password.</span>
