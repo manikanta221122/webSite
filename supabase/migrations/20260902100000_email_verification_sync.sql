@@ -111,3 +111,44 @@ on conflict (id) do update set admin_upi_id = excluded.admin_upi_id, admin_upi_n
 alter table public.app_settings enable row level security;
 drop policy if exists "public can read payment settings" on public.app_settings;
 create policy "public can read payment settings" on public.app_settings for select using (true);
+
+
+-- Match result evidence, lock state, and player-level performance.
+alter table public.matches add column if not exists result_notes text;
+alter table public.matches add column if not exists result_evidence_url text;
+alter table public.matches add column if not exists result_locked_at timestamptz;
+alter table public.matches add column if not exists result_locked_by uuid references public.profiles(id);
+
+create table if not exists public.match_player_stats (
+  id uuid primary key default gen_random_uuid(),
+  match_id uuid not null references public.matches(id) on delete cascade,
+  team_id uuid not null references public.teams(id) on delete cascade,
+  team_player_id uuid not null references public.team_players(id) on delete cascade,
+  kills integer not null default 0 check (kills >= 0),
+  assists integer not null default 0 check (assists >= 0),
+  played boolean not null default true,
+  notes text,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  unique(match_id, team_player_id)
+);
+
+alter table public.match_player_stats enable row level security;
+drop policy if exists "admins manage match player stats" on public.match_player_stats;
+create policy "admins manage match player stats"
+on public.match_player_stats for all to authenticated
+using ((select public.is_admin()))
+with check ((select public.is_admin()));
+drop policy if exists "participants view own match player stats" on public.match_player_stats;
+create policy "participants view own match player stats"
+on public.match_player_stats for select to authenticated
+using (
+  exists (
+    select 1 from public.matches m
+    join public.teams t on t.id = m.team_a_id or t.id = m.team_b_id
+    where m.id = match_player_stats.match_id and t.captain_id = (select auth.uid())
+  )
+);
+grant select, insert, update, delete on public.match_player_stats to authenticated;
+
+alter table public.matches enable row level security;
