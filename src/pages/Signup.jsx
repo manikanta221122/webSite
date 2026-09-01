@@ -37,7 +37,7 @@ export default function Signup() {
         <p className="hud-label text-cyan-400 mb-2">Arena Clash Identity</p>
         <h1 className="font-display text-2xl font-bold text-white">{sent ? "Check Your Email" : "Create Your Account"}</h1>
         <p className="text-slate-500 text-sm mt-2">
-          {sent ? "We sent a verification link to " + email + ". Open the email and click the link to verify your account." : "Use your official college email to join the arena."}
+          {sent ? "We sent a verification link to " + email + ". Open the email and click the link to verify your account." : "Use any valid email address. You must verify it before entering the arena."}
         </p>
       </div>
 
@@ -51,9 +51,9 @@ export default function Signup() {
       ) : (
         <form onSubmit={handleSignup} className="panel p-6 flex flex-col gap-4">
           <div><label className="label-field">Full Name</label><input value={name} onChange={(e) => setName(e.target.value)} className="input-field" placeholder="Your full name" autoComplete="name" required /></div>
-          <div><label className="label-field">College Email</label><input value={email} onChange={(e) => setEmail(e.target.value)} type="email" className="input-field" placeholder="yourname@kluniversity.in" autoComplete="email" required /></div>
+          <div><label className="label-field">Email Address</label><input value={email} onChange={(e) => setEmail(e.target.value)} type="email" className="input-field" placeholder="you@example.com" autoComplete="email" required /></div>
           <div><label className="label-field">Password</label><input value={password} onChange={(e) => setPassword(e.target.value)} type="password" className="input-field" placeholder="At least 8 characters" autoComplete="new-password" minLength={8} required /></div>
-          <div className="flex gap-2 items-start text-xs text-slate-500"><ShieldCheck size={15} className="text-cyan-400 mt-0.5 shrink-0" /><span>We will send a verification link to your college email before you can log in.</span></div>
+          <div className="flex gap-2 items-start text-xs text-slate-500"><ShieldCheck size={15} className="text-cyan-400 mt-0.5 shrink-0" /><span>We will send a verification link to your email before you can log in.</span></div>
           {error && <p className="text-live-400 text-xs">{error}</p>}
           <button disabled={submitting} type="submit" className="btn-primary flex items-center justify-center gap-2 mt-2 disabled:opacity-60"><MailCheck size={16} /> {submitting ? "Sending verification email..." : "Create Account & Verify Email"}</button>
         </form>
