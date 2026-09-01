@@ -97,3 +97,17 @@ before insert or update of registration_id, amount on public.payments
 for each row execute function public.validate_payment_amount();
 
 revoke execute on function public.validate_payment_amount() from public, anon, authenticated;
+
+
+create table if not exists public.app_settings (
+  id boolean primary key default true check (id = true),
+  admin_upi_id text not null default 'manikantasai.patel@gmail.com',
+  admin_upi_name text not null default 'Arena Clash',
+  updated_at timestamptz not null default now()
+);
+insert into public.app_settings (id, admin_upi_id, admin_upi_name)
+values (true, 'manikantasai.patel@gmail.com', 'Arena Clash')
+on conflict (id) do update set admin_upi_id = excluded.admin_upi_id, admin_upi_name = excluded.admin_upi_name, updated_at = now();
+alter table public.app_settings enable row level security;
+drop policy if exists "public can read payment settings" on public.app_settings;
+create policy "public can read payment settings" on public.app_settings for select using (true);
