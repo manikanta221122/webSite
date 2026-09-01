@@ -65,7 +65,7 @@ export default function TournamentCard({ tournament }) {
       <Countdown target={tournament.startDate} label="COUNTDOWN" compact />
 
       <Link
-        to={`/tournaments/${tournament.id}`
+        to={`/tournaments/${tournament.id}`}
         className="mt-auto flex items-center justify-center gap-1.5 font-hud font-semibold uppercase tracking-wide text-xs px-4 py-2.5 border border-white/15 text-slate-200 hover:border-cyan-400/60 hover:text-cyan-300 hover:bg-white/5 transition-colors"
       >
         View Tournament <ArrowUpRight size={14} />
