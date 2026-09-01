@@ -49,7 +49,7 @@ export default function Dashboard() {
         <div className="panel p-5">
           <ShieldCheck size={18} className="text-volt-400 mb-2" />
           <p className="font-hud font-bold text-white text-lg">{user.verified ? "Verified" : "Unverified"}</p>
-          <p className="hud-label text-[10px] mt-1">Student Status</p>
+          <p className="hud-label text-[10px] mt-1">Email Status</p>
         </div>
       </div>
 
@@ -57,7 +57,7 @@ export default function Dashboard() {
         <div className="lg:col-span-3 panel p-5 border-cyan-500/20 bg-cyan-500/[0.03]">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div><p className="hud-label text-cyan-400">Player Command Center</p><p className="text-white font-hud font-semibold mt-1">Your tournament journey at a glance</p></div>
-            <div className="flex gap-5 text-sm"><span className="flex items-center gap-2 text-slate-300"><Users size={15} className="text-cyan-400"/>{myTeam?.members?.length || 0} players</span><span className="flex items-center gap-2 text-slate-300"><Medal size={15} className="text-gold-400"/>{myTeam?.points || 0} points</span></div>
+            <div className="flex gap-5 text-sm"><span className="flex items-center gap-2 text-slate-300"><Users size={15} className="text-cyan-400"/>{myTeam?.players?.length || 0} players</span><span className="flex items-center gap-2 text-slate-300"><Medal size={15} className="text-gold-400"/>{myTeam?.points || 0} points</span></div>
           </div>
         </div>
         <div className="lg:col-span-2 flex flex-col gap-8">
@@ -120,7 +120,7 @@ export default function Dashboard() {
                     <p className="text-xs text-slate-500 mt-1">₹{t.prizePool.toLocaleString("en-IN")} prize pool</p>
                     <p className="text-[10px] text-slate-500 mt-1">{t.date || "Date TBA"} {t.time ? `· ${t.time}` : ""}</p>
                     <button type="button" onClick={(e) => { e.preventDefault(); shareTournament(t); }} className="btn-ghost mt-2 text-[10px] inline-flex items-center gap-1"><Share2 size={12}/> Share</button>
-                    <p className="text-[10px] text-cyan-400 mt-2 flex items-center gap-1"><CheckCircle2 size={11} /> Registration active</p>
+                    <p className="text-[10px] text-cyan-400 mt-2 flex items-center gap-1"><CheckCircle2 size={11} /> {myTeam?.registrationStatus === "confirmed" ? "Registration confirmed" : myTeam?.registrationStatus === "payment_pending" ? "Payment pending" : "Registration " + (myTeam?.registrationStatus || "pending")}</p>
                   </Link>
                 ))}
               </div>
