@@ -52,42 +52,21 @@ export function AuthProvider({ children }) {
     return () => { active = false; listener.subscription.unsubscribe(); };
   }, [syncFromSession]);
 
-  const sendSignupOtp = async ({ email, name }) => {
+  const signup = async ({ name, email, password }) => {
     const normalized = normalizeEmail(email);
     validateCollegeEmail(normalized);
-    const { error } = await supabase.auth.signInWithOtp({
+    if (!password || password.length < 8) throw new Error("Password must be at least 8 characters.");
+
+    const { data, error } = await supabase.auth.signUp({
       email: normalized,
-      options: { shouldCreateUser: true, data: { full_name: name.trim() } },
+      password,
+      options: {
+        data: { full_name: name.trim() },
+        emailRedirectTo: window.location.origin + "/auth/callback",
+      },
     });
     if (error) throw new Error(error.message);
-    return normalized;
-  };
-
-  const verifyOtp = async (email, token) => {
-    const normalized = normalizeEmail(email);
-    const code = token.trim();
-    if (!/^\d{6}$/.test(code)) throw new Error("Enter the 6-digit verification code.");
-    const { data, error } = await supabase.auth.verifyOtp({ email: normalized, token: code, type: "email" });
-    if (error) throw new Error(error.message);
-    const profile = await fetchProfile(data.user.id);
-    const nextUser = toUser(data.user, profile);
-    setUser(nextUser);
-    return nextUser;
-  };
-
-  const resendOtp = async (email) => {
-    const normalized = normalizeEmail(email);
-    validateCollegeEmail(normalized);
-    const { error } = await supabase.auth.signInWithOtp({ email: normalized, options: { shouldCreateUser: false } });
-    if (error) throw new Error(error.message);
-  };
-
-  const setPassword = async (password) => {
-    if (typeof password !== "string" || password.length < 8) {
-      throw new Error("Password must be at least 8 characters.");
-    }
-    const { error } = await supabase.auth.updateUser({ password });
-    if (error) throw new Error(error.message);
+    return { email: normalized, alreadyRegistered: !!data.user?.identities?.length === false };
   };
 
   const login = async ({ email, password }) => {
@@ -100,8 +79,6 @@ export function AuthProvider({ children }) {
     setUser(nextUser);
     return nextUser;
   };
-
-  const signup = async ({ name, email }) => sendSignupOtp({ name, email });
 
   const logout = async () => { await supabase.auth.signOut(); setUser(null); };
 
