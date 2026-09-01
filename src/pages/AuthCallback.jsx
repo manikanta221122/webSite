@@ -9,15 +9,47 @@ export default function AuthCallback() {
   useEffect(() => {
     let active = true;
     const finish = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
+      // Supabase may return the verification code in the URL before a session exists.
+      const { data: { session: initialSession } } = await supabase.auth.getSession();
+      let session = initialSession;
+
+      if (!session) {
+        const code = new URLSearchParams(window.location.search).get("code");
+        if (code) {
+          const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+          if (error) throw error;
+          session = data.session;
+        }
+      }
+
       if (!active) return;
-      if (!session) return navigate("/login", { replace: true });
-      const { data: profile } = await supabase.from("profiles").select("role").eq("id", session.user.id).maybeSingle();
+      if (!session) return navigate("/login?verified=failed", { replace: true });
+
+      // Keep the app's profile verification flag synchronized with Supabase Auth.
+      const confirmed = !!session.user.email_confirmed_at;
+      const { data: profile, error: profileError } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", session.user.id)
+        .maybeSingle();
+
+      if (profileError) throw profileError;
+
+      await supabase
+        .from("profiles")
+        .update({ verified: confirmed, updated_at: new Date().toISOString() })
+        .eq("id", session.user.id);
+
       navigate(profile?.role === "admin" ? "/admin" : "/dashboard", { replace: true });
     };
     finish();
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session && active) navigate("/dashboard", { replace: true });
+      if (session && active && session.user.email_confirmed_at) {
+        supabase.from("profiles")
+          .update({ verified: true, updated_at: new Date().toISOString() })
+          .eq("id", session.user.id)
+          .then(() => navigate("/dashboard", { replace: true }));
+      }
     });
     return () => { active = false; listener.subscription.unsubscribe(); };
   }, [navigate]);
