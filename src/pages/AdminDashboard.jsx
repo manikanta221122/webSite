@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { Users, Trophy, Radio, Shield, Check, X, Ban, PlusCircle, CheckCircle2, Gamepad2, ArrowUpRight, Settings2, Swords, CalendarClock, KeyRound } from "lucide-react";
 import { useData } from "../context/DataContext";
-import { users } from "../data/users";
+
 import { gameMeta, modesForGame } from "../data/gameMeta";
 import { useAuth } from "../context/AuthContext";
 import { supabase } from "../lib/supabase";
@@ -22,7 +22,7 @@ export default function AdminDashboard() {
   const [matchForm, setMatchForm] = useState(emptyMatchForm);
   const [matchFormError, setMatchFormError] = useState("");
   const [matchFilterId, setMatchFilterId] = useState("all");
-  const [roomForms, setRoomForms] = useState({});
+  const [roomForms, setRoomForms] = useState({}); const [liveUserCount, setLiveUserCount] = useState(0);
   const [roomSaving, setRoomSaving] = useState("");
   const [editingTournament, setEditingTournament] = useState(null);
   const [editForm, setEditForm] = useState(null);
@@ -69,11 +69,11 @@ export default function AdminDashboard() {
     }
   };
 
-  const activeCount = tournaments.filter((t) => ["open", "starting_soon"].includes(t.status)).length;
+  useEffect(() => { supabase.from("profiles").select("id", { count: "exact", head: true }).then(({ count }) => setLiveUserCount(count || 0)); }, []); const activeCount = tournaments.filter((t) => ["open", "starting_soon"].includes(t.status)).length;
   const approvedRevenue = payments.filter((payment) => payment.status === "approved").reduce((total, payment) => total + payment.amount, 0);
   const paidPrizes = payouts.reduce((total, payout) => total + payout.amount, 0);
   const stats = [
-    { icon: Users, label: "Players", value: users.filter((u) => u.role === "player").length, detail: "Verified campus accounts" },
+    { icon: Users, label: "Players", value: liveUserCount, detail: "Verified campus accounts" },
     { icon: Trophy, label: "Tournaments", value: tournaments.length, detail: "Created by administration" },
     { icon: Radio, label: "Active", value: activeCount, detail: "Open or starting soon" },
     { icon: Shield, label: "Teams", value: teams.length, detail: "Registered squads" },
