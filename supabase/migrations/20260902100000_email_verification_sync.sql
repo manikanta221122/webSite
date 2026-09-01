@@ -67,3 +67,33 @@ where u.id = p.id
 
 revoke execute on function public.sync_profile_email_verification() from public, anon, authenticated;
 revoke execute on function public.prevent_self_role_escalation() from public, anon, authenticated;
+
+
+-- Prevent clients from submitting a manual payment amount different from the tournament fee.
+create or replace function public.validate_payment_amount()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare expected_amount numeric;
+begin
+  select t.entry_fee into expected_amount
+  from public.registrations r
+  join public.tournaments t on t.id = r.tournament_id
+  where r.id = new.registration_id;
+
+  if expected_amount is null or new.amount <> expected_amount then
+    raise exception 'Payment amount must exactly match the tournament entry fee.';
+  end if;
+
+  return new;
+end;
+$$;
+
+drop trigger if exists payments_validate_amount on public.payments;
+create trigger payments_validate_amount
+before insert or update of registration_id, amount on public.payments
+for each row execute function public.validate_payment_amount();
+
+revoke execute on function public.validate_payment_amount() from public, anon, authenticated;
