@@ -185,6 +185,7 @@ export default function AdminDashboard() {
       )}
 
       {editingTournament && editForm && (
+        <>
         <section className="panel p-6 mb-7 border-fuchsia-500/20 bg-fuchsia-500/[0.02]">
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-5">
             <div><p className="hud-label text-fuchsia-300">Bracket engine</p><h2 className="font-display text-2xl font-bold text-white mt-1">Plan the tournament</h2><p className="text-sm text-slate-500 mt-2">Generate matchups from registered teams, then advance confirmed winners into the next round.</p></div>
@@ -213,6 +214,7 @@ export default function AdminDashboard() {
           </div>
           <div className="flex justify-end mt-5"><button type="button" className="btn-primary" onClick={async()=>{try{await updateTournament(editingTournament.id,editForm);setEditingTournament(null);setEditForm(null)}catch(e){alert(e.message)}}}>Save tournament changes</button></div>
         </section>
+        </>
       )}
 
       {activeTab === "tournaments" && !showForm && (
