@@ -2,16 +2,19 @@ import { createContext, useCallback, useContext, useEffect, useState } from "rea
 import { supabase } from "../lib/supabase";
 
 const AuthContext = createContext(null);
+const COLLEGE_EMAIL_DOMAIN = "@kluniversity.in";
+
+function normalizeEmail(email) { return email.trim().toLowerCase(); }
+
+function validateCollegeEmail(email) {
+  if (!email.endsWith(COLLEGE_EMAIL_DOMAIN)) {
+    throw new Error("Use your college email ending in " + COLLEGE_EMAIL_DOMAIN + ".");
+  }
+}
 
 function toUser(authUser, profile) {
   if (!authUser || !profile) return null;
-  return {
-    id: authUser.id,
-    name: profile.full_name,
-    email: authUser.email,
-    role: profile.role,
-    verified: profile.verified,
-  };
+  return { id: authUser.id, name: profile.full_name, email: authUser.email, role: profile.role, verified: profile.verified };
 }
 
 async function fetchProfile(userId) {
@@ -26,10 +29,7 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
 
   const syncFromSession = useCallback(async (session) => {
-    if (!session?.user) {
-      setUser(null);
-      return;
-    }
+    if (!session?.user) { setUser(null); return; }
     try {
       const profile = await fetchProfile(session.user.id);
       setUser(toUser(session.user, profile));
@@ -46,56 +46,48 @@ export function AuthProvider({ children }) {
       await syncFromSession(session);
       if (active) setLoading(false);
     });
-
     const { data: listener } = supabase.auth.onAuthStateChange(async (_event, session) => {
       await syncFromSession(session);
     });
-
-    return () => {
-      active = false;
-      listener.subscription.unsubscribe();
-    };
+    return () => { active = false; listener.subscription.unsubscribe(); };
   }, [syncFromSession]);
 
-  const signup = async ({ name, email, password }) => {
-    const { data, error } = await supabase.auth.signUp({
-      email: email.trim().toLowerCase(),
-      password,
-      options: { data: { full_name: name.trim() } },
+  const sendOtp = async ({ email, name = "", isSignup = false }) => {
+    const normalized = normalizeEmail(email);
+    validateCollegeEmail(normalized);
+    const { error } = await supabase.auth.signInWithOtp({
+      email: normalized,
+      options: { shouldCreateUser: isSignup, data: isSignup ? { full_name: name.trim() } : undefined },
     });
     if (error) throw new Error(error.message);
-    if (!data.session) {
-      // Email confirmation is required by this Supabase project's Auth settings.
-      throw new Error("Account created. Check your email to confirm it, then log in.");
-    }
+    return normalized;
+  };
+
+  const verifyOtp = async (email, token) => {
+    const normalized = normalizeEmail(email);
+    const code = token.trim();
+    if (!/^\d{6}$/.test(code)) throw new Error("Enter the 6-digit verification code.");
+    const { data, error } = await supabase.auth.verifyOtp({ email: normalized, token: code, type: "email" });
+    if (error) throw new Error(error.message);
     const profile = await fetchProfile(data.user.id);
     const nextUser = toUser(data.user, profile);
     setUser(nextUser);
     return nextUser;
   };
 
-  const login = async (email, password) => {
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email: email.trim().toLowerCase(),
-      password,
-    });
-    if (error) throw new Error(error.message === "Invalid login credentials" ? "Invalid email or password." : error.message);
-    const profile = await fetchProfile(data.user.id);
-    const nextUser = toUser(data.user, profile);
-    setUser(nextUser);
-    return nextUser;
+  const resendOtp = async (email) => {
+    const normalized = normalizeEmail(email);
+    validateCollegeEmail(normalized);
+    const { error } = await supabase.auth.signInWithOtp({ email: normalized, options: { shouldCreateUser: false } });
+    if (error) throw new Error(error.message);
   };
 
-  const logout = async () => {
-    await supabase.auth.signOut();
-    setUser(null);
-  };
+  const signup = async ({ name, email }) => sendOtp({ name, email, isSignup: true });
+  const login = async (email) => sendOtp({ email, isSignup: false });
 
-  return (
-    <AuthContext.Provider value={{ user, loading, login, signup, logout }}>
-      {children}
-    </AuthContext.Provider>
-  );
+  const logout = async () => { await supabase.auth.signOut(); setUser(null); };
+
+  return <AuthContext.Provider value={{ user, loading, login, signup, verifyOtp, resendOtp, logout }}>{children}</AuthContext.Provider>;
 }
 
 export const useAuth = () => useContext(AuthContext);
