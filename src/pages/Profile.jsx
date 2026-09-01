@@ -1,6 +1,7 @@
 import { Navigate, Link } from "react-router-dom";
-import { ShieldCheck, Trophy, Swords } from "lucide-react";
-import { useAuth } from "../context/AuthContext";
+import { ShieldCheck, Trophy, Swords, Target, Crosshair, Medal, CalendarDays } from "lucide-react";
+import { useEffect } from "react";
+import { supabase } from "../lib/supabase";
 import { useData } from "../context/DataContext";
 
 const ACHIEVEMENTS = [
@@ -12,10 +13,15 @@ const ACHIEVEMENTS = [
 export default function Profile() {
   const { user } = useAuth();
   const { teams, matches } = useData();
+  const [playerStats, setPlayerStats] = useState([]);
+  const [loadingStats, setLoadingStats] = useState(true);
   if (!user) return <Navigate to="/login" replace />;
 
   const myTeam = teams.find((t) => t.captainUserId === user.id);
   const played = myTeam ? matches.filter((m) => m.teamA === myTeam.name || m.teamB === myTeam.name) : [];
+  useEffect(() => { let active = true; (async () => { if (!myTeam) { setLoadingStats(false); return; } const playerIds = (myTeam.players || []).filter(p => p.userId === user.id || p.name === user.name).map(p => p.id); if (!playerIds.length) { setLoadingStats(false); return; } const { data } = await supabase.from("match_player_stats").select("*, matches(round,match_number,scheduled_at)").in("team_player_id", playerIds).order("created_at", { ascending:false }); if (active) { setPlayerStats(data || []); setLoadingStats(false); } })(); return () => { active=false; }; }, [myTeam?.id, user.id]);
+  const totalKills = playerStats.reduce((n,s)=>n+Number(s.kills||0),0);
+  const totalAssists = playerStats.reduce((n,s)=>n+Number(s.assists||0),0);
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 py-12">
@@ -61,6 +67,13 @@ export default function Profile() {
           <div><p className="text-2xl font-display font-black text-white">{played.length}</p><p className="hud-label text-[9px]">MATCHES</p></div>
           <div><p className="text-2xl font-display font-black text-white">#{Math.max(1, teams.slice().sort((a,b)=>(b.points||0)-(a.points||0)).findIndex(t=>t.id===myTeam?.id)+1)}</p><p className="hud-label text-[9px]">RANK</p></div>
         </div>
+      </div>
+
+      <div className="panel p-5 mb-8 border-volt-500/20 bg-volt-500/[0.03]">
+        <div className="flex items-center justify-between mb-4"><div><p className="hud-label text-volt-400">PERFORMANCE</p><h3 className="font-display font-bold text-white text-lg mt-1">Your Match Statistics</h3></div><Crosshair size={20} className="text-volt-400"/></div>
+        {loadingStats ? <p className="text-slate-500 text-sm">Loading stats…</p> : !playerStats.length ? <p className="text-slate-500 text-sm">Your verified match statistics will appear here after results are published.</p> : <>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5"><div className="panel p-3"><Target size={15} className="text-cyan-400 mb-1"/><p className="text-xl font-display font-black text-white">{totalKills}</p><p className="hud-label text-[9px]">TOTAL KILLS</p></div><div className="panel p-3"><Medal size={15} className="text-gold-400 mb-1"/><p className="text-xl font-display font-black text-white">{totalAssists}</p><p className="hud-label text-[9px]">ASSISTS</p></div><div className="panel p-3"><p className="text-xl font-display font-black text-white">{playerStats.filter(s=>s.played).length}</p><p className="hud-label text-[9px]">MATCHES</p></div><div className="panel p-3"><p className="text-xl font-display font-black text-white">{playerStats.length ? Math.max(...playerStats.map(s=>Number(s.kills||0))) : 0}</p><p className="hud-label text-[9px]">BEST KILLS</p></div></div>
+          <div className="flex flex-col gap-2">{playerStats.map(s=><div key={s.id} className="border border-white/5 p-3 flex items-center justify-between gap-4"><div><p className="text-sm text-white font-hud">{s.matches?.round || "Match"} #{s.matches?.match_number || ""}</p><p className="text-xs text-slate-500"><CalendarDays size={11} className="inline mr-1"/>{s.matches?.scheduled_at ? new Date(s.matches.scheduled_at).toLocaleDateString("en-IN",{day:"numeric",month:"short",year:"numeric"}) : "Date unavailable"}</p></div><div className="text-right text-xs font-hud text-slate-300"><span className="text-cyan-300">{s.kills} K</span> · <span className="text-volt-300">{s.assists} A</span>{!s.played && <span className="text-slate-600 ml-2">Did not play</span>}</div></div>)}</div></>}
       </div>
 
       <div className="grid md:grid-cols-2 gap-8">
