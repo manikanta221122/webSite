@@ -29,7 +29,7 @@ export default function Navbar() {
   return (
     <header className="sticky top-0 z-50 border-b border-white/10 bg-void-950/90 backdrop-blur-xl">
       <nav className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-        <Link to="/" className="flex items-center gap-2 shrink-0" onClick={() => setOpen(false)}>
+        <Link to="/" className="flex items-center gap-2 shrink-0 animate-glow" onClick={() => setOpen(false)}>
           <div className="w-8 h-8 flex items-center justify-center bg-gradient-to-br from-fuchsia-500 to-violet-500 shadow-[0_0_24px_rgba(168,85,247,0.35)]" style={{ clipPath: "polygon(20% 0,100% 0,80% 100%,0 100%)" }}>
             <Swords size={16} className="text-white" />
           </div>
@@ -40,12 +40,12 @@ export default function Navbar() {
 
         <div className="hidden lg:flex items-center gap-8">
           {navLinks.map((l) => (
-            <NavLink key={l.to} to={l.to} end={l.to === "/"} className={({ isActive }) => `font-hud text-sm uppercase tracking-wide transition-colors ${isActive ? "text-cyan-400" : "text-slate-300 hover:text-white"}`}>
+            <NavLink key={l.to} to={l.to} end={l.to === "/"} className={({ isActive }) => `nav-animated font-hud text-sm uppercase tracking-wide transition-colors ${isActive ? "text-cyan-400" : "text-slate-300 hover:text-white"}`}>
               {l.label}
             </NavLink>
           ))}
           {isAdmin && (
-            <NavLink to="/admin" className={({ isActive }) => `font-hud text-sm uppercase tracking-wide transition-colors flex items-center gap-1.5 ${isActive ? "text-volt-400" : "text-slate-300 hover:text-white"}`}>
+            <NavLink to="/admin" className={({ isActive }) => `nav-animated font-hud text-sm uppercase tracking-wide transition-colors flex items-center gap-1.5 ${isActive ? "text-volt-400" : "text-slate-300 hover:text-white"}`}>
               <Shield size={14} /> Admin
             </NavLink>
           )}
@@ -72,7 +72,7 @@ export default function Navbar() {
                   <ChevronDown size={14} className="text-slate-400" />
                 </button>
                 {menuOpen && (
-                  <div className="absolute right-0 mt-2 w-52 panel p-2 flex flex-col gap-1">
+                  <div className="absolute right-0 mt-2 w-52 panel dropdown-animated p-2 flex flex-col gap-1">
                     <Link onClick={() => setMenuOpen(false)} to={dashboardPath} className="px-3 py-2 text-sm text-slate-200 hover:bg-white/5 rounded-sm">{isAdmin ? "Admin Dashboard" : "My Dashboard"}</Link>
                     <Link onClick={() => setMenuOpen(false)} to="/profile" className="px-3 py-2 text-sm text-slate-200 hover:bg-white/5 rounded-sm">Profile</Link>
                     <Link onClick={() => setMenuOpen(false)} to="/notifications" className="px-3 py-2 text-sm text-slate-200 hover:bg-white/5 rounded-sm">Notifications</Link>
