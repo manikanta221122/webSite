@@ -32,6 +32,10 @@ export function AuthProvider({ children }) {
     if (!session?.user) { setUser(null); return; }
     try {
       const profile = await fetchProfile(session.user.id);
+      if (session.user.email_confirmed_at && !profile.verified) {
+        await supabase.from("profiles").update({ verified: true, updated_at: new Date().toISOString() }).eq("id", session.user.id);
+        profile.verified = true;
+      }
       setUser(toUser(session.user, profile));
     } catch (error) {
       console.error("Could not load profile:", error.message);
