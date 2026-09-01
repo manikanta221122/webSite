@@ -52,12 +52,12 @@ export function AuthProvider({ children }) {
     return () => { active = false; listener.subscription.unsubscribe(); };
   }, [syncFromSession]);
 
-  const sendOtp = async ({ email, name = "", isSignup = false }) => {
+  const sendSignupOtp = async ({ email, name }) => {
     const normalized = normalizeEmail(email);
     validateCollegeEmail(normalized);
     const { error } = await supabase.auth.signInWithOtp({
       email: normalized,
-      options: { shouldCreateUser: isSignup, data: isSignup ? { full_name: name.trim() } : undefined },
+      options: { shouldCreateUser: true, data: { full_name: name.trim() } },
     });
     if (error) throw new Error(error.message);
     return normalized;
@@ -82,12 +82,30 @@ export function AuthProvider({ children }) {
     if (error) throw new Error(error.message);
   };
 
-  const signup = async ({ name, email }) => sendOtp({ name, email, isSignup: true });
-  const login = async (email) => sendOtp({ email, isSignup: false });
+  const setPassword = async (password) => {
+    if (typeof password !== "string" || password.length < 8) {
+      throw new Error("Password must be at least 8 characters.");
+    }
+    const { error } = await supabase.auth.updateUser({ password });
+    if (error) throw new Error(error.message);
+  };
+
+  const login = async ({ email, password }) => {
+    const normalized = normalizeEmail(email);
+    validateCollegeEmail(normalized);
+    const { data, error } = await supabase.auth.signInWithPassword({ email: normalized, password });
+    if (error) throw new Error("Invalid college email or password.");
+    const profile = await fetchProfile(data.user.id);
+    const nextUser = toUser(data.user, profile);
+    setUser(nextUser);
+    return nextUser;
+  };
+
+  const signup = async ({ name, email }) => sendSignupOtp({ name, email });
 
   const logout = async () => { await supabase.auth.signOut(); setUser(null); };
 
-  return <AuthContext.Provider value={{ user, loading, login, signup, verifyOtp, resendOtp, logout }}>{children}</AuthContext.Provider>;
+  return <AuthContext.Provider value={{ user, loading, login, signup, verifyOtp, setPassword, resendOtp, logout }}>{children}</AuthContext.Provider>;
 }
 
 export const useAuth = () => useContext(AuthContext);
