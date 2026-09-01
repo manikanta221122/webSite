@@ -14,6 +14,18 @@ export default async function handler(req, res) {
     if (!registration) return send(res, 403, { error: "Registration ownership could not be verified." });
     const expected = crypto.createHmac("sha256", process.env.RAZORPAY_KEY_SECRET).update(razorpay_order_id + "|" + razorpay_payment_id).digest("hex");
     if (expected.length !== razorpay_signature.length || !crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(razorpay_signature))) return send(res, 400, { error: "Payment signature verification failed." });
+
+    const keyId = process.env.RAZORPAY_KEY_ID, keySecret = process.env.RAZORPAY_KEY_SECRET;
+    if (!keyId || !keySecret) return send(res, 503, { error: "Razorpay is not configured on the server." });
+    const razorAuth = Buffer.from(keyId + ":" + keySecret).toString("base64");
+    const orderResponse = await fetch("https://api.razorpay.com/v1/orders/" + encodeURIComponent(razorpay_order_id), {
+      headers: { Authorization: "Basic " + razorAuth }
+    });
+    const razorOrder = await orderResponse.json();
+    if (!orderResponse.ok) return send(res, 400, { error: "Could not validate the Razorpay order." });
+    const expectedAmount = Math.round(Number(tournament.entry_fee || 0) * 100);
+    if (Number(razorOrder.amount) !== expectedAmount || razorOrder.currency !== "INR") return send(res, 400, { error: "Payment amount does not match the tournament entry fee." });
+    if (razorOrder.notes?.registration_id !== registration.id || razorOrder.notes?.tournament_id !== tournamentId || razorOrder.notes?.team_id !== teamId) return send(res, 400, { error: "Payment order does not belong to this registration." });
     const { data: tournament } = await supabase.from("tournaments").select("entry_fee").eq("id", tournamentId).single();
     if (!tournament) return send(res, 404, { error: "Tournament not found." });
     const { data: payment, error: paymentError } = await supabase.from("payments").insert({ registration_id: registration.id, amount: tournament.entry_fee, provider: "razorpay", provider_payment_id: razorpay_payment_id, status: "approved", submitted_at: new Date().toISOString(), reviewed_at: new Date().toISOString() }).select().single();
