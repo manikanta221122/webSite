@@ -2,15 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useState } from "rea
 import { supabase } from "../lib/supabase";
 
 const AuthContext = createContext(null);
-const COLLEGE_EMAIL_DOMAIN = "@kluniversity.in";
-
 function normalizeEmail(email) { return email.trim().toLowerCase(); }
-
-function validateCollegeEmail(email) {
-  if (!email.endsWith(COLLEGE_EMAIL_DOMAIN)) {
-    throw new Error("Use your college email ending in " + COLLEGE_EMAIL_DOMAIN + ".");
-  }
-}
 
 function toUser(authUser, profile) {
   if (!authUser || !profile) return null;
@@ -54,7 +46,6 @@ export function AuthProvider({ children }) {
 
   const signup = async ({ name, email, password }) => {
     const normalized = normalizeEmail(email);
-    validateCollegeEmail(normalized);
     if (!password || password.length < 8) throw new Error("Password must be at least 8 characters.");
 
     const { data, error } = await supabase.auth.signUp({
@@ -63,7 +54,7 @@ export function AuthProvider({ children }) {
       options: {
         data: {
           full_name: name.trim(),
-          college_id: normalized.split("@")[0],
+          college_id: normalized,
         },
         emailRedirectTo: window.location.origin + "/auth/callback",
       },
@@ -74,11 +65,10 @@ export function AuthProvider({ children }) {
 
   const login = async ({ email, password }) => {
     const normalized = normalizeEmail(email);
-    validateCollegeEmail(normalized);
     const { data, error } = await supabase.auth.signInWithPassword({ email: normalized, password });
     if (error) {
       if (error.code === "email_not_confirmed" || /email not confirmed/i.test(error.message || "")) {
-        throw new Error("Please verify your college email first. Check your inbox or spam folder.");
+        throw new Error("Please verify your email first. Check your inbox or spam folder.");
       }
       throw new Error("Invalid college email or password.");
     }
@@ -90,7 +80,6 @@ export function AuthProvider({ children }) {
 
   const resendVerification = async (email) => {
     const normalized = normalizeEmail(email);
-    validateCollegeEmail(normalized);
     const { error } = await supabase.auth.resend({
       type: "signup",
       email: normalized,
