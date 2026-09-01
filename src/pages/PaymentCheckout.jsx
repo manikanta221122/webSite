@@ -10,7 +10,7 @@ export default function PaymentCheckout() {
   const { tournaments, teams, payments, submitPayment } = useData();
   const tournament = tournaments.find((item) => item.id === id);
   const team = teams.find((item) => item.id === params.get("team") && item.tournamentIds?.includes(id));
-  const payment = payments.find((item) => item.teamId === team?.id && item.tournamentId === id);
+  const payment = payments.find((item) => item.teamId === team?.id && item.tournamentId === id && item.status !== "rejected");
   // Manual UPI is intentionally the only payment method for the first tournaments.
   // Razorpay remains in the codebase and can be re-enabled later.
   const [method] = useState("manual");
@@ -142,7 +142,7 @@ export default function PaymentCheckout() {
       </form>
     </div>
 
-    <div className="flex gap-3 mt-5 text-xs text-slate-500"><ShieldCheck size={17} className="text-cyan-400 shrink-0" /><p>Gateway payments are verified server-side before the registration is confirmed.</p></div>
+    <div className="flex gap-3 mt-5 text-xs text-slate-500"><ShieldCheck size={17} className="text-cyan-400 shrink-0" /><p>Manual UPI payments are reviewed by the Arena Clash admin before your registration is confirmed.</p></div>
     <div className="flex gap-3 mt-4 text-xs text-amber-300/80"><TriangleAlert size={17} className="shrink-0" /><p>Never share your UPI PIN, OTP, card CVV, or bank password with anyone.</p></div>
   </div>;
 }
