@@ -8,7 +8,7 @@ const RESEND_SECONDS = 60;
 export default function Signup() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [password, setPasswordValue] = useState("");
   const [otp, setOtp] = useState("");
   const [step, setStep] = useState("details");
   const [errors, setErrors] = useState({});
@@ -73,7 +73,7 @@ export default function Signup() {
         <form onSubmit={handleSendOtp} className="panel p-6 flex flex-col gap-4">
           <div><label className="label-field">Full Name</label><input value={name} onChange={(e) => setName(e.target.value)} className="input-field" placeholder="Your full name" autoComplete="name" />{errors.name && <p className="text-live-400 text-xs mt-1">{errors.name}</p>}</div>
           <div><label className="label-field">College Email</label><input value={email} onChange={(e) => setEmail(e.target.value)} type="email" className="input-field" placeholder="yourname@kluniversity.in" autoComplete="email" />{errors.email && <p className="text-live-400 text-xs mt-1">{errors.email}</p>}</div>
-          <div><label className="label-field">Password</label><input value={password} onChange={(e) => setPassword(e.target.value)} type="password" className="input-field" placeholder="At least 8 characters" autoComplete="new-password" />{errors.password && <p className="text-live-400 text-xs mt-1">{errors.password}</p>}</div>
+          <div><label className="label-field">Password</label><input value={password} onChange={(e) => setPasswordValue(e.target.value)} type="password" className="input-field" placeholder="At least 8 characters" autoComplete="new-password" />{errors.password && <p className="text-live-400 text-xs mt-1">{errors.password}</p>}</div>
           <div className="flex gap-2 items-start text-xs text-slate-500"><ShieldCheck size={15} className="text-cyan-400 mt-0.5 shrink-0" /><span>Your email is verified with a 6-digit OTP. Your password is used for future logins.</span></div>
           {submitError && <p className="text-live-400 text-xs">{submitError}</p>}
           <button disabled={submitting} type="submit" className="btn-primary flex items-center justify-center gap-2 mt-2 disabled:opacity-60"><MailCheck size={16} /> {submitting ? "Sending code..." : "Send Verification Code"}</button>
