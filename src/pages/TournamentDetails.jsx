@@ -7,6 +7,7 @@ import StatusBadge from "../components/StatusBadge";
 import MatchRow from "../components/MatchRow";
 import Bracket from "../components/Bracket";
 import LeaderboardTable from "../components/LeaderboardTable";
+import Countdown from "../components/Countdown";
 import { gameMeta, modeLabel } from "../data/gameMeta";
 
 const TABS = ["Overview", "Rules", "Teams", "Schedule", "Bracket", "Leaderboard"];
@@ -60,6 +61,8 @@ export default function TournamentDetails() {
               </div>
             ))}
           </div>
+
+          <div className="mt-6 max-w-md"><Countdown target={tournament.startDate} /></div>
 
           {myTeam ? (
             <div className="mt-8 flex flex-wrap items-center gap-3">
