@@ -41,6 +41,8 @@ function mapTournament(row, confirmedCounts) {
 
 function mapPlayer(row) {
   return {
+    id: row.id,
+    userId: row.user_id,
     name: row.player_name,
     gameUid: row.game_uid,
     ign: row.ign,
