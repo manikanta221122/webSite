@@ -32,10 +32,6 @@ export function AuthProvider({ children }) {
     if (!session?.user) { setUser(null); return; }
     try {
       const profile = await fetchProfile(session.user.id);
-      if (session.user.email_confirmed_at && !profile.verified) {
-        await supabase.from("profiles").update({ verified: true, updated_at: new Date().toISOString() }).eq("id", session.user.id);
-        profile.verified = true;
-      }
       setUser(toUser(session.user, profile));
     } catch (error) {
       console.error("Could not load profile:", error.message);
@@ -65,7 +61,10 @@ export function AuthProvider({ children }) {
       email: normalized,
       password,
       options: {
-        data: { full_name: name.trim() },
+        data: {
+          full_name: name.trim(),
+          college_id: normalized.split("@")[0],
+        },
         emailRedirectTo: window.location.origin + "/auth/callback",
       },
     });
@@ -77,16 +76,32 @@ export function AuthProvider({ children }) {
     const normalized = normalizeEmail(email);
     validateCollegeEmail(normalized);
     const { data, error } = await supabase.auth.signInWithPassword({ email: normalized, password });
-    if (error) throw new Error("Invalid college email or password.");
+    if (error) {
+      if (error.code === "email_not_confirmed" || /email not confirmed/i.test(error.message || "")) {
+        throw new Error("Please verify your college email first. Check your inbox or spam folder.");
+      }
+      throw new Error("Invalid college email or password.");
+    }
     const profile = await fetchProfile(data.user.id);
     const nextUser = toUser(data.user, profile);
     setUser(nextUser);
     return nextUser;
   };
 
+  const resendVerification = async (email) => {
+    const normalized = normalizeEmail(email);
+    validateCollegeEmail(normalized);
+    const { error } = await supabase.auth.resend({
+      type: "signup",
+      email: normalized,
+      options: { emailRedirectTo: window.location.origin + "/auth/callback" },
+    });
+    if (error) throw new Error(error.message);
+  };
+
   const logout = async () => { await supabase.auth.signOut(); setUser(null); };
 
-  return <AuthContext.Provider value={{ user, loading, login, signup, logout }}>{children}</AuthContext.Provider>;
+  return <AuthContext.Provider value={{ user, loading, login, signup, resendVerification, logout }}>{children}</AuthContext.Provider>;
 }
 
 export const useAuth = () => useContext(AuthContext);
