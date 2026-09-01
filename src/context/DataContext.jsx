@@ -126,6 +126,10 @@ function mapMatch(row, teamNameById) {
     killsB: row.kills_b,
     winnerTeamId: row.winner_team_id,
     status: row.status,
+    resultNotes: row.result_notes || "",
+    resultEvidenceUrl: row.result_evidence_url || "",
+    resultLockedAt: row.result_locked_at || null,
+    resultLockedBy: row.result_locked_by || null,
     scheduledAt: row.scheduled_at,
     roomId: row.room_id,
     roomPassword: row.room_password,
@@ -188,7 +192,7 @@ export function DataProvider({ children }) {
 
   const refreshMatches = useCallback(async () => {
     const [{ data, error }, { data: roomRows, error: roomError }] = await Promise.all([
-      supabase.from("match_public").select("*").order("scheduled_at", { ascending: true }),
+      (user?.role === "admin" ? supabase.from("matches").select("*").order("scheduled_at", { ascending: true }) : supabase.from("match_public").select("*").order("scheduled_at", { ascending: true })),
       user
         ? supabase.from("match_rooms").select("match_id, room_id, room_password")
         : Promise.resolve({ data: [], error: null }),
@@ -573,6 +577,10 @@ export function DataProvider({ children }) {
         status,
         winner_team_id: winnerTeamId,
         updated_at: new Date().toISOString(),
+        result_notes: patch.resultNotes === undefined ? current.result_notes : (patch.resultNotes.trim() || null),
+        result_evidence_url: patch.resultEvidenceUrl === undefined ? current.result_evidence_url : (patch.resultEvidenceUrl.trim() || null),
+        result_locked_at: patch.lockResult ? new Date().toISOString() : (patch.unlockResult ? null : current.result_locked_at),
+        result_locked_by: patch.lockResult ? user.id : (patch.unlockResult ? null : current.result_locked_by),
       })
       .eq("id", matchId);
     if (error) throw new Error(error.message);
