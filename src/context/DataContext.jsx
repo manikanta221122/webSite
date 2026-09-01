@@ -280,6 +280,9 @@ export function DataProvider({ children }) {
     if (!user) throw new Error("Please log in before registering a team.");
     const tournament = tournaments.find((t) => t.id === tournamentId);
     if (!tournament) throw new Error("Tournament not found.");
+    if (!user.verified) throw new Error("Please verify your email before registering a team.");
+    if (tournament.status !== "open" && tournament.status !== "starting_soon") throw new Error("This tournament is not accepting registrations.");
+    if (tournament.registrationDeadline && new Date(tournament.registrationDeadline + "T23:59:59") < new Date()) throw new Error("The registration deadline has passed.");
 
     const mainRosterCount = teamData.players.filter((p) => !p.substitute).length;
     if (mainRosterCount !== tournament.teamSize) {
@@ -289,7 +292,7 @@ export function DataProvider({ children }) {
     const tag = teamData.teamName.trim().slice(0, 3).toUpperCase() || "TM";
     const { data: team, error: teamError } = await supabase
       .from("teams")
-      .insert({ name: teamData.teamName.trim(), tag, college: "KL University", captain_id: user.id })
+      .insert({ name: teamData.teamName.trim(), tag, college: teamData.college?.trim() || "Open", captain_id: user.id })
       .select()
       .single();
     if (teamError) {
