@@ -357,6 +357,7 @@ export function DataProvider({ children }) {
   };
 
   const reviewPayment = async (paymentId, approved) => {
+    if (user?.role !== "admin") throw new Error("Only administrators can review payments.");
     const { data: payment, error: fetchError } = await supabase.from("payments").select("*").eq("id", paymentId).single();
     if (fetchError || !payment) throw new Error("Payment not found.");
     if (payment.status !== "pending") return;
@@ -378,6 +379,7 @@ export function DataProvider({ children }) {
   };
 
   const recordPayout = async (tournamentId, placement, recipient, upiId, amount) => {
+    if (user?.role !== "admin") throw new Error("Only administrators can record payouts.");
     if (!recipient?.trim() || !upiId?.trim() || !Number(amount)) throw new Error("Recipient, UPI ID, and payout amount are required.");
     const tournament = tournaments.find((t) => t.id === tournamentId);
     const paidSoFar = payouts.filter((p) => p.tournamentId === tournamentId).reduce((sum, p) => sum + p.amount, 0);
