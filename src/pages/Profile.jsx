@@ -12,13 +12,13 @@ const ACHIEVEMENTS = [
 ];
 
 export default function Profile() {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const { teams, matches } = useData();
   const [playerStats, setPlayerStats] = useState([]);
   const [loadingStats, setLoadingStats] = useState(true);
   const myTeam = teams.find((t) => t.captainUserId === user.id);
   const played = myTeam ? matches.filter((m) => m.teamA === myTeam.name || m.teamB === myTeam.name) : [];
-  useEffect(() => { let active = true; (async () => { if (!myTeam) { setLoadingStats(false); return; } const playerIds = (myTeam.players || []).filter(p => p.userId === user.id || p.name === user.name).map(p => p.id); if (!playerIds.length) { setLoadingStats(false); return; } const { data } = await supabase.from("match_player_stats").select("*, matches(round,match_number,scheduled_at)").in("team_player_id", playerIds).order("created_at", { ascending:false }); if (active) { setPlayerStats(data || []); setLoadingStats(false); } })(); return () => { active=false; }; }, [myTeam?.id, user.id]);
+  useEffect(() => { let active = true; (async () => { if (!myTeam) { setLoadingStats(false); return; } const playerIds = (myTeam.players || []).filter(p => p.userId === userId || p.name === userName).map(p => p.id); if (!playerIds.length) { setLoadingStats(false); return; } const { data } = await supabase.from("match_player_stats").select("*, matches(round,match_number,scheduled_at)").in("team_player_id", playerIds).order("created_at", { ascending:false }); if (active) { setPlayerStats(data || []); setLoadingStats(false); } })(); return () => { active=false; }; }, [myTeam?.id, user.id]);
   if (!user) return <Navigate to="/login" replace />;
 
   const totalKills = playerStats.reduce((n,s)=>n+Number(s.kills||0),0);
