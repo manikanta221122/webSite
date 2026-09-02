@@ -12,7 +12,7 @@ const ROUND_OPTIONS = ["Round 1", "Round 2", "Quarter Final", "Semi Final", "Gra
 const emptyMatchForm = { tournamentId: "", round: "Round 1", matchNumber: "1", teamAId: "", teamALabel: "TBD", teamBId: "", teamBLabel: "TBD", scheduledAt: "", roomId: "", roomPassword: "" };
 
 export default function AdminDashboard() {
-  const { tournaments, teams, matches, payments, payouts, reports, updateReport, reviewPayment, recordPayout, createTournament, updateTournamentRoom, deleteTournament, createMatch, updateMatchResult, setMatchTeam, generateTournamentBracket, advanceWinner } = useData();
+  const { tournaments, teams, matches, payments, payouts, reports, updateReport, reviewPayment, recordPayout, createTournament, updateTournamentRoom, deleteTournament, createMatch, updateMatchResult, setMatchTeam, generateTournamentBracket, advanceWinner, announcements, createAnnouncement } = useData();
   const { user } = useAuth();
   const [showForm, setShowForm] = useState(false);
   const [created, setCreated] = useState(null);
@@ -27,7 +27,7 @@ export default function AdminDashboard() {
   const [editingTournament, setEditingTournament] = useState(null);
   const [editForm, setEditForm] = useState(null);
   const [announcementForm, setAnnouncementForm] = useState({ tournamentId: "", title: "", message: "" });
-  const [reportStatus, setReportStatus] = useState({});
+  const [announcementSaving, setAnnouncementSaving] = useState(false);
   const [reportFilter, setReportFilter] = useState("all");
 
 
@@ -107,7 +107,7 @@ export default function AdminDashboard() {
       </div>
 
       <div className="flex items-center gap-1 border-b border-white/10 mb-7 overflow-x-auto no-scrollbar">
-        {[["overview", "Overview"], ["tournaments", "Tournaments"], ["matches", "Matches"], ["payments", "Payments"], ["reports", "Reports"], ["users", "Users"]].map(([tab, label]) => (
+        {[["overview", "Overview"], ["tournaments", "Tournaments"], ["matches", "Matches"], ["payments", "Payments"], ["announcements", "Announcements"], ["reports", "Reports"], ["users", "Users"]].map(([tab, label]) => (
           <button key={tab} onClick={() => setActiveTab(tab)} className={`px-4 py-3 font-hud text-xs uppercase tracking-wider whitespace-nowrap border-b-2 transition-colors ${activeTab === tab ? "text-cyan-300 border-cyan-400" : "text-slate-500 border-transparent hover:text-slate-200"}`}>
             {label}
           </button>
@@ -357,6 +357,42 @@ export default function AdminDashboard() {
         </section>
       )}
 
+      {activeTab === "announcements" && !showForm && (
+        <section className="mb-7">
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-5">
+            <div><p className="hud-label text-cyan-400">Player communications</p><h2 className="font-display text-2xl font-bold text-white mt-1">Announcements</h2><p className="text-sm text-slate-500 mt-2">Publish official tournament updates for players.</p></div>
+            <span className="badge text-cyan-300 border border-cyan-500/25 bg-cyan-500/10">{announcements.length} published</span>
+          </div>
+          <div className="grid lg:grid-cols-3 gap-6">
+            <form onSubmit={async (e) => { e.preventDefault(); if (!announcementForm.title.trim() || !announcementForm.message.trim()) return; setAnnouncementSaving(true); try { await createAnnouncement(announcementForm.tournamentId || null, announcementForm.title, announcementForm.message); setAnnouncementForm({ tournamentId: "", title: "", message: "" }); } catch (error) { alert(error.message); } finally { setAnnouncementSaving(false); } }} className="panel p-6 h-fit">
+              <p className="hud-label text-volt-400">New announcement</p>
+              <h3 className="font-display text-xl font-bold text-white mt-1">Publish update</h3>
+              <div className="space-y-3 mt-5">
+                <select value={announcementForm.tournamentId} onChange={e => setAnnouncementForm({...announcementForm,tournamentId:e.target.value})} className="input-field">
+                  <option value="">All tournaments</option>
+                  {tournaments.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+                </select>
+                <input required maxLength="120" value={announcementForm.title} onChange={e => setAnnouncementForm({...announcementForm,title:e.target.value})} className="input-field" placeholder="Announcement title" />
+                <textarea required maxLength="2000" value={announcementForm.message} onChange={e => setAnnouncementForm({...announcementForm,message:e.target.value})} className="input-field min-h-[140px]" placeholder="Write the official update..." />
+                <button disabled={announcementSaving} className="btn-primary w-full">{announcementSaving ? "Publishing…" : "Publish announcement"}</button>
+              </div>
+            </form>
+            <div className="lg:col-span-2 space-y-3">
+              {announcements.length === 0 ? <div className="panel p-10 text-center"><p className="text-slate-500 text-sm">No announcements published yet.</p></div> : announcements.map(a => {
+                const tournament = tournaments.find(t => t.id === a.tournamentId);
+                return <article key={a.id} className="panel p-5 border-white/5">
+                  <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
+                    <div><p className="hud-label text-cyan-400">{tournament?.name || "All tournaments"}</p><h3 className="font-display text-lg font-bold text-white mt-1">{a.title}</h3></div>
+                    <time className="text-xs text-slate-600">{a.createdAt ? new Date(a.createdAt).toLocaleString("en-IN") : "Just now"}</time>
+                  </div>
+                  <p className="text-sm text-slate-400 mt-3 whitespace-pre-wrap leading-6">{a.message}</p>
+                </article>;
+              })}
+            </div>
+          </div>
+        </section>
+      )}
+
       {activeTab === "reports" && !showForm && (
         <section className="mb-7">
           <div className="flex flex-wrap items-end justify-between gap-4 mb-5"><div><p className="hud-label">Moderation</p><h2 className="font-display text-2xl font-bold text-white mt-1">Reports & Disputes</h2><p className="text-sm text-slate-500 mt-2">Real player reports from the live database.</p></div><select value={reportFilter} onChange={e=>setReportFilter(e.target.value)} className="input-field max-w-[180px]"><option value="all">All reports</option><option value="open">Open</option><option value="resolved">Resolved</option></select></div>
@@ -393,8 +429,6 @@ function MatchResultRow({ match, teams, onSave, onSetTeam }) {
   const [killsA, setKillsA] = useState(match.killsA ?? 0);
   const [killsB, setKillsB] = useState(match.killsB ?? 0);
   const [status, setStatus] = useState(match.status);
-  const [roomId, setRoomId] = useState(match.roomId ?? "");
-  const [roomPassword, setRoomPassword] = useState(match.roomPassword ?? "");
   const [notes, setNotes] = useState(match.resultNotes ?? "");
   const [evidenceUrl, setEvidenceUrl] = useState(match.resultEvidenceUrl ?? "");
   const [stats, setStats] = useState({});
@@ -415,7 +449,7 @@ function MatchResultRow({ match, teams, onSave, onSetTeam }) {
   };
   const save = async (lockResult = false) => {
     setSaving(true); setError("");
-    try { await onSave(match.id, { scoreA, scoreB, killsA, killsB, status, roomId, roomPassword, resultNotes:notes, resultEvidenceUrl:evidenceUrl, lockResult, unlockResult:!lockResult && false }); }
+    try { await onSave(match.id, { scoreA, scoreB, killsA, killsB, status, resultNotes:notes, resultEvidenceUrl:evidenceUrl, lockResult, unlockResult:!lockResult && false }); }
     catch (err) { setError(err.message); } finally { setSaving(false); }
   };
   const saveStats = async () => {
