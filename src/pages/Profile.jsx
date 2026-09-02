@@ -1,6 +1,7 @@
 import { Navigate, Link } from "react-router-dom";
 import { ShieldCheck, Trophy, Swords, Target, Crosshair, Medal, CalendarDays } from "lucide-react";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { useAuth } from "../context/AuthContext";
 import { supabase } from "../lib/supabase";
 import { useData } from "../context/DataContext";
 
@@ -15,11 +16,11 @@ export default function Profile() {
   const { teams, matches } = useData();
   const [playerStats, setPlayerStats] = useState([]);
   const [loadingStats, setLoadingStats] = useState(true);
-  if (!user) return <Navigate to="/login" replace />;
-
   const myTeam = teams.find((t) => t.captainUserId === user.id);
   const played = myTeam ? matches.filter((m) => m.teamA === myTeam.name || m.teamB === myTeam.name) : [];
   useEffect(() => { let active = true; (async () => { if (!myTeam) { setLoadingStats(false); return; } const playerIds = (myTeam.players || []).filter(p => p.userId === user.id || p.name === user.name).map(p => p.id); if (!playerIds.length) { setLoadingStats(false); return; } const { data } = await supabase.from("match_player_stats").select("*, matches(round,match_number,scheduled_at)").in("team_player_id", playerIds).order("created_at", { ascending:false }); if (active) { setPlayerStats(data || []); setLoadingStats(false); } })(); return () => { active=false; }; }, [myTeam?.id, user.id]);
+  if (!user) return <Navigate to="/login" replace />;
+
   const totalKills = playerStats.reduce((n,s)=>n+Number(s.kills||0),0);
   const totalAssists = playerStats.reduce((n,s)=>n+Number(s.assists||0),0);
 
