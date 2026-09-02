@@ -7,7 +7,7 @@ function parts(ms) {
 }
 
 export default function Countdown({ target, label = "TOURNAMENT STARTS", compact = false }) {
-  const [now, setNow] = useState(Date.now());
+  const [now, setNow] = useState(() => Date.now());
   useEffect(() => { const id = setInterval(() => setNow(Date.now()), 1000); return () => clearInterval(id); }, []);
   const left = new Date(target).getTime() - now;
   if (!target || !Number.isFinite(new Date(target).getTime()) || left <= 0) return null;
