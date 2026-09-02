@@ -152,3 +152,25 @@ using (
 grant select, insert, update, delete on public.match_player_stats to authenticated;
 
 alter table public.matches enable row level security;
+
+
+-- Fix open-email signup: college_id is a unique optional campus identifier and
+-- must never be populated with arbitrary email addresses. Email belongs to
+-- auth.users; player profile creation leaves college_id null unless explicitly
+-- collected as a real campus ID.
+create or replace function public.handle_new_user()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  insert into public.profiles (id, full_name, college_id)
+  values (
+    new.id,
+    coalesce(nullif(trim(new.raw_user_meta_data->>'full_name'), ''), 'Campus Player'),
+    null
+  );
+  return new;
+end;
+$$;
