@@ -54,8 +54,7 @@ export function AuthProvider({ children }) {
       options: {
         data: {
           full_name: name.trim(),
-          college_id: normalized,
-        },
+                  },
         emailRedirectTo: window.location.origin + "/auth/callback",
       },
     });
