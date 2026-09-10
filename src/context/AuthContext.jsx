@@ -6,7 +6,7 @@ function normalizeEmail(email) { return email.trim().toLowerCase(); }
 
 function toUser(authUser, profile) {
   if (!authUser || !profile) return null;
-  return { id: authUser.id, name: profile.full_name, email: authUser.email, role: profile.role, verified: profile.verified };
+  return { id: authUser.id, name: profile.full_name, email: authUser.email, role: profile.role, verified: true };
 }
 
 async function fetchProfile(userId) {
@@ -54,42 +54,34 @@ export function AuthProvider({ children }) {
       options: {
         data: {
           full_name: name.trim(),
-                  },
-        emailRedirectTo: window.location.origin + "/auth/callback",
+        },
       },
     });
     if (error) throw new Error(error.message);
-    return { email: normalized, alreadyRegistered: !!data.user?.identities?.length === false };
-  };
 
-  const login = async ({ email, password }) => {
-    const normalized = normalizeEmail(email);
-    const { data, error } = await supabase.auth.signInWithPassword({ email: normalized, password });
-    if (error) {
-      if (error.code === "email_not_confirmed" || /email not confirmed/i.test(error.message || "")) {
-        throw new Error("Please verify your email first. Check your inbox or spam folder.");
-      }
-      throw new Error("Invalid college email or password.");
+    if (!data.session || !data.user) {
+      throw new Error("Account created, but automatic login is unavailable. Please make sure email confirmations are disabled in Supabase Authentication settings.");
     }
+
     const profile = await fetchProfile(data.user.id);
     const nextUser = toUser(data.user, profile);
     setUser(nextUser);
     return nextUser;
   };
 
-  const resendVerification = async (email) => {
+  const login = async ({ email, password }) => {
     const normalized = normalizeEmail(email);
-    const { error } = await supabase.auth.resend({
-      type: "signup",
-      email: normalized,
-      options: { emailRedirectTo: window.location.origin + "/auth/callback" },
-    });
-    if (error) throw new Error(error.message);
+    const { data, error } = await supabase.auth.signInWithPassword({ email: normalized, password });
+    if (error) throw new Error("Invalid email or password.");
+    const profile = await fetchProfile(data.user.id);
+    const nextUser = toUser(data.user, profile);
+    setUser(nextUser);
+    return nextUser;
   };
 
   const logout = async () => { await supabase.auth.signOut(); setUser(null); };
 
-  return <AuthContext.Provider value={{ user, loading, login, signup, resendVerification, logout }}>{children}</AuthContext.Provider>;
+  return <AuthContext.Provider value={{ user, loading, login, signup, logout }}>{children}</AuthContext.Provider>;
 }
 
 export const useAuth = () => useContext(AuthContext);
