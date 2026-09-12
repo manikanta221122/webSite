@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { UserPlus, Swords } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 
@@ -11,6 +11,12 @@ export default function Signup() {
   const [submitting, setSubmitting] = useState(false);
   const { signup } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const returnTo = typeof location.state?.from === "string" && location.state.from.startsWith("/")
+    ? location.state.from
+    : null;
+  const tournamentName = location.state?.registrationTournament;
 
   const handleSignup = async (e) => {
     e.preventDefault();
@@ -20,7 +26,11 @@ export default function Signup() {
     setSubmitting(true);
     try {
       const newUser = await signup({ name, email, password });
-      navigate(newUser.role === "admin" ? "/admin" : "/dashboard", { replace: true });
+      if (returnTo && newUser.role !== "admin") {
+        navigate(returnTo, { replace: true });
+      } else {
+        navigate(newUser.role === "admin" ? "/admin" : "/dashboard", { replace: true });
+      }
     } catch (err) {
       setError(err.message);
     } finally {
@@ -36,7 +46,9 @@ export default function Signup() {
         </div>
         <p className="hud-label text-cyan-400 mb-2">Arena Clash Identity</p>
         <h1 className="font-display text-2xl font-bold text-white">Create Your Account</h1>
-        <p className="text-slate-500 text-sm mt-2">Create your player account with any valid email address and start competing.</p>
+        <p className="text-slate-500 text-sm mt-2">
+          {tournamentName ? `Create your account to continue joining ${tournamentName}.` : "Create your player account with any valid email address and start competing."}
+        </p>
       </div>
 
       <form onSubmit={handleSignup} className="panel p-6 flex flex-col gap-4">
@@ -45,10 +57,10 @@ export default function Signup() {
         <div><label className="label-field">Password</label><input value={password} onChange={(e) => setPassword(e.target.value)} type="password" className="input-field" placeholder="At least 8 characters" autoComplete="new-password" minLength={8} required /></div>
         <p className="text-xs text-slate-500">No email verification step. Your account is ready immediately after signup.</p>
         {error && <p className="text-live-400 text-xs">{error}</p>}
-        <button disabled={submitting} type="submit" className="btn-primary flex items-center justify-center gap-2 mt-2 disabled:opacity-60"><UserPlus size={16} /> {submitting ? "Creating account..." : "Create Account"}</button>
+        <button disabled={submitting} type="submit" className="btn-primary flex items-center justify-center gap-2 mt-2 disabled:opacity-60"><UserPlus size={16} /> {submitting ? "Creating account..." : "Create Account & Continue"}</button>
       </form>
 
-      <p className="text-center text-sm text-slate-500 mt-6">Already have an account? <Link to="/login" className="text-cyan-400 hover:underline">Log in</Link></p>
+      <p className="text-center text-sm text-slate-500 mt-6">Already have an account? <Link to="/login" state={location.state} className="text-cyan-400 hover:underline">Log in</Link></p>
     </div>
   );
 }
