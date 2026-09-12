@@ -3,10 +3,11 @@ import { supabase } from "../lib/supabase";
 
 const AuthContext = createContext(null);
 function normalizeEmail(email) { return email.trim().toLowerCase(); }
+function normalizePhone(phone) { return phone.trim().replace(/[\s()-]/g, ""); }
 
 function toUser(authUser, profile) {
   if (!authUser || !profile) return null;
-  return { id: authUser.id, name: profile.full_name, email: authUser.email, role: profile.role, verified: true };
+  return { id: authUser.id, name: profile.full_name, email: authUser.email, phoneNumber: profile.phone_number || "", role: profile.role, verified: true };
 }
 
 async function fetchProfile(userId) {
@@ -44,9 +45,11 @@ export function AuthProvider({ children }) {
     return () => { active = false; listener.subscription.unsubscribe(); };
   }, [syncFromSession]);
 
-  const signup = async ({ name, email, password }) => {
+  const signup = async ({ name, email, password, phoneNumber }) => {
     const normalized = normalizeEmail(email);
+    const normalizedPhone = normalizePhone(phoneNumber || "");
     if (!password || password.length < 8) throw new Error("Password must be at least 8 characters.");
+    if (!/^\+?[0-9]{10,15}$/.test(normalizedPhone)) throw new Error("Enter a valid phone number (10–15 digits).");
 
     const { data, error } = await supabase.auth.signUp({
       email: normalized,
@@ -54,6 +57,7 @@ export function AuthProvider({ children }) {
       options: {
         data: {
           full_name: name.trim(),
+          phone_number: normalizedPhone,
         },
       },
     });
