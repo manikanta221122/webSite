@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { LogIn, Swords } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 
@@ -10,6 +10,12 @@ export default function Login() {
   const [submitting, setSubmitting] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const returnTo = typeof location.state?.from === "string" && location.state.from.startsWith("/")
+    ? location.state.from
+    : null;
+  const tournamentName = location.state?.registrationTournament;
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -17,7 +23,11 @@ export default function Login() {
     setSubmitting(true);
     try {
       const loggedIn = await login({ email, password });
-      navigate(loggedIn.role === "admin" ? "/admin" : "/dashboard");
+      if (returnTo && loggedIn.role !== "admin") {
+        navigate(returnTo, { replace: true });
+      } else {
+        navigate(loggedIn.role === "admin" ? "/admin" : "/dashboard", { replace: true });
+      }
     } catch (loginError) {
       setError(loginError.message);
     } finally {
@@ -32,8 +42,10 @@ export default function Login() {
           <Swords size={25} className="text-white" />
         </div>
         <p className="hud-label text-cyan-400 mb-2">Arena Clash Access</p>
-        <h1 className="font-display text-3xl font-bold text-white">Enter the Arena</h1>
-        <p className="text-slate-500 text-sm mt-2">Sign in with your email and password.</p>
+        <h1 className="font-display text-3xl font-bold text-white">Login to Join</h1>
+        <p className="text-slate-500 text-sm mt-2">
+          {tournamentName ? `Sign in to continue registering for ${tournamentName}.` : "Sign in with your email and password."}
+        </p>
       </div>
 
       <form onSubmit={handleLogin} className="panel p-6 md:p-7 flex flex-col gap-4">
@@ -51,12 +63,12 @@ export default function Login() {
           </div>
         )}
         <button disabled={submitting} type="submit" className="btn-primary flex items-center justify-center gap-2 mt-2 disabled:opacity-60">
-          <LogIn size={16} /> {submitting ? "Signing in..." : "Log In"}
+          <LogIn size={16} /> {submitting ? "Signing in..." : "Login & Continue"}
         </button>
       </form>
 
       <p className="text-center text-sm text-slate-500 mt-6">
-        Don't have an account? <Link to="/signup" className="text-cyan-400 hover:underline">Sign up</Link>
+        Don't have an account? <Link to="/signup" state={location.state} className="text-cyan-400 hover:underline">Create one</Link>
       </p>
     </div>
   );
