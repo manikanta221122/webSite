@@ -1,7 +1,8 @@
 import { useState } from "react";
-import { useParams, useNavigate, Navigate, Link } from "react-router-dom";
-import { CheckCircle2, UserPlus, ShieldAlert } from "lucide-react";
+import { useParams, useNavigate, Navigate, Link, useLocation } from "react-router-dom";
+import { CheckCircle2, UserPlus, ShieldAlert, LogIn } from "lucide-react";
 import { useData } from "../context/DataContext";
+import { useAuth } from "../context/AuthContext";
 import { modeLabel } from "../data/gameMeta";
 
 const emptyPlayer = () => ({ name: "", gameUid: "", ign: "" });
@@ -9,7 +10,9 @@ const emptyPlayer = () => ({ name: "", gameUid: "", ign: "" });
 export default function TeamRegistration() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const { tournaments, registerTeam } = useData();
+  const { user, loading: authLoading } = useAuth();
   const tournament = tournaments.find((t) => t.id === id);
 
   const [teamName, setTeamName] = useState("");
@@ -23,6 +26,33 @@ export default function TeamRegistration() {
   const [success, setSuccess] = useState(null);
 
   if (!tournament) return <Navigate to="/tournaments" replace />;
+
+  // Authentication is the first step in registration. Never let a player fill
+  // the team form and discover at submit time that they need an account.
+  if (authLoading) {
+    return (
+      <div className="max-w-md mx-auto px-4 py-24 text-center">
+        <div className="panel p-8">
+          <p className="hud-label text-cyan-400 mb-2">Checking your account</p>
+          <h1 className="font-display font-bold text-xl text-white">Getting you into the arena...</h1>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    const returnTo = `${location.pathname}${location.search}`;
+    return (
+      <Navigate
+        to="/login"
+        replace
+        state={{
+          from: returnTo,
+          registrationTournament: tournament.name,
+        }}
+      />
+    );
+  }
 
   const updatePlayer = (idx, field, value) => setPlayers((prev) => prev.map((p, i) => (i === idx ? { ...p, [field]: value } : p)));
 
